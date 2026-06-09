@@ -14,6 +14,20 @@ const initialForm = {
   needSubsidy: [] as string[],
   budget: "",
   needParking: "",
+  viewingSlot1: "",
+  viewingSlot2: "",
+  viewingSlot3: "",
+};
+
+const formatDateTime = (val: string) => {
+  if (!val) return "未填寫";
+  const d = new Date(val);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
 };
 
 export default function InquiryPage() {
@@ -63,6 +77,9 @@ export default function InquiryPage() {
             <p>📄 需租補/入籍/報稅：{form.needSubsidy.join("、") || "未填寫"}</p>
             <p>💰 租金預算：NT$ {form.budget}</p>
             <p>🚗 汽車位：{form.needParking}</p>
+            <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
+            <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
+            <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
           </div>
           <button
             onClick={() => { setForm(initialForm); setSubmitted(false); }}
@@ -236,6 +253,32 @@ export default function InquiryPage() {
                   <input type="radio" name="needParking" value={v} checked={form.needParking === v} onChange={handleChange} required />
                   {v}
                 </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 預約看房時間 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">10. 預約看房時間 *</label>
+            <p className="text-xs text-gray-400 mb-3">請提供三個方便的時段（至少填寫一個）</p>
+            <div className="flex flex-col gap-3">
+              {([
+                { label: "時段 1", name: "viewingSlot1", required: true },
+                { label: "時段 2", name: "viewingSlot2", required: false },
+                { label: "時段 3", name: "viewingSlot3", required: false },
+              ] as const).map(({ label, name, required }) => (
+                <div key={name}>
+                  <label className="block text-xs text-gray-500 mb-1">{label}{required ? " *" : "（選填）"}</label>
+                  <input
+                    type="datetime-local"
+                    name={name}
+                    required={required}
+                    value={form[name]}
+                    onChange={handleChange}
+                    step={1800}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               ))}
             </div>
           </div>
