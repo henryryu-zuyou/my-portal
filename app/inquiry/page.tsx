@@ -20,11 +20,11 @@ const initialForm = {
   viewingSlot3: "",
 };
 
-// 看房時間下拉選項：09:00 ~ 21:00，每 30 分鐘一個
+// 看房時間下拉選項：08:00 ~ 23:00，每 30 分鐘一個
 const TIME_OPTIONS: string[] = [];
-for (let h = 9; h <= 21; h++) {
+for (let h = 8; h <= 23; h++) {
   for (const m of ["00", "30"]) {
-    if (h === 21 && m === "30") break;
+    if (h === 23 && m === "30") break;
     TIME_OPTIONS.push(`${String(h).padStart(2, "0")}:${m}`);
   }
 }
@@ -43,6 +43,7 @@ const formatDateTime = (val: string) => {
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [todayStr, setTodayStr] = useState(""); // 今日日期，限制看房日期不能選過去
   // 看房時段拆成「日期 + 時間」兩格，再合併成 viewingSlotN 的 datetime 字串
   const [slotParts, setSlotParts] = useState({
     viewingSlot1: { date: "", time: "" },
@@ -59,10 +60,15 @@ export default function InquiryPage() {
     });
   };
 
-  // 從網址 ?house=房號 自動帶入詢問物件，房客不需手動填寫
+  // 從網址 ?house=房號 自動帶入詢問物件，房客不需手動填寫；並設定今日日期
   useEffect(() => {
     const house = new URLSearchParams(window.location.search).get("house");
     if (house) setForm(prev => ({ ...prev, house }));
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    setTodayStr(`${yyyy}-${mm}-${dd}`);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -325,6 +331,7 @@ export default function InquiryPage() {
                       type="date"
                       required={required}
                       value={slotParts[name].date}
+                      min={todayStr}
                       onChange={e => updateSlot(name, "date", e.target.value)}
                       className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
