@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const initialForm = {
+  house: "",
   name: "",
   moveInDate: "",
   leaseDuration: "",
@@ -33,6 +34,12 @@ const formatDateTime = (val: string) => {
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+
+  // 從網址 ?house=房號 自動帶入詢問物件，房客不需手動填寫
+  useEffect(() => {
+    const house = new URLSearchParams(window.location.search).get("house");
+    if (house) setForm(prev => ({ ...prev, house }));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -72,6 +79,7 @@ export default function InquiryPage() {
           <h2 className="text-xl font-bold text-gray-800 mb-2">填寫完成！</h2>
           <p className="text-gray-500 text-sm mb-6">感謝 {form.name} 填寫資料，我們會盡快與您聯繫。</p>
           <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
+            {form.house && <p>🏠 詢問物件：{form.house}</p>}
             <p>📅 預計入住：{form.moveInDate}</p>
             <p>⏳ 租期：{form.leaseDuration}</p>
             <p>👥 大人人數：{form.adults} 人</p>
@@ -87,7 +95,7 @@ export default function InquiryPage() {
             <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
           </div>
           <button
-            onClick={() => { setForm(initialForm); setSubmitted(false); }}
+            onClick={() => { setForm({ ...initialForm, house: form.house }); setSubmitted(false); }}
             className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
           >
             重新填寫
@@ -101,7 +109,13 @@ export default function InquiryPage() {
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-md mx-auto">
         <h1 className="text-xl font-bold text-gray-800 mb-1">📋 房客詢問表單</h1>
-        <p className="text-sm text-gray-500 mb-6">請填寫以下資訊，讓我們更了解您的需求</p>
+        <p className="text-sm text-gray-500 mb-4">請填寫以下資訊，讓我們更了解您的需求</p>
+
+        {form.house && (
+          <div className="mb-6 inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-sm font-medium px-3 py-1 rounded-full">
+            🏠 詢問物件：{form.house}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -189,7 +203,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">5. 職業 *</label>
             <input
               name="occupation" required value={form.occupation} onChange={handleChange}
-              placeholder="例：上班族、學生、自由業"
+              placeholder="例：科技業工程師 / 醫院護理師 / 餐飲業服務生"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
