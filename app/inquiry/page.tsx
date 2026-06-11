@@ -20,6 +20,15 @@ const initialForm = {
   viewingSlot3: "",
 };
 
+// 看房時間下拉選項：09:00 ~ 21:00，每 30 分鐘一個
+const TIME_OPTIONS: string[] = [];
+for (let h = 9; h <= 21; h++) {
+  for (const m of ["00", "30"]) {
+    if (h === 21 && m === "30") break;
+    TIME_OPTIONS.push(`${String(h).padStart(2, "0")}:${m}`);
+  }
+}
+
 const formatDateTime = (val: string) => {
   if (!val) return "未填寫";
   const d = new Date(val);
@@ -34,6 +43,21 @@ const formatDateTime = (val: string) => {
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  // 看房時段拆成「日期 + 時間」兩格，再合併成 viewingSlotN 的 datetime 字串
+  const [slotParts, setSlotParts] = useState({
+    viewingSlot1: { date: "", time: "" },
+    viewingSlot2: { date: "", time: "" },
+    viewingSlot3: { date: "", time: "" },
+  });
+
+  const updateSlot = (name: keyof typeof slotParts, field: "date" | "time", value: string) => {
+    setSlotParts(prev => {
+      const next = { ...prev, [name]: { ...prev[name], [field]: value } };
+      const { date, time } = next[name];
+      setForm(f => ({ ...f, [name]: date && time ? `${date}T${time}` : "" }));
+      return next;
+    });
+  };
 
   // 從網址 ?house=房號 自動帶入詢問物件，房客不需手動填寫
   useEffect(() => {
@@ -95,7 +119,15 @@ export default function InquiryPage() {
             <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
           </div>
           <button
-            onClick={() => { setForm({ ...initialForm, house: form.house }); setSubmitted(false); }}
+            onClick={() => {
+              setForm({ ...initialForm, house: form.house });
+              setSlotParts({
+                viewingSlot1: { date: "", time: "" },
+                viewingSlot2: { date: "", time: "" },
+                viewingSlot3: { date: "", time: "" },
+              });
+              setSubmitted(false);
+            }}
             className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
           >
             重新填寫
@@ -288,15 +320,26 @@ export default function InquiryPage() {
               ] as const).map(({ label, name, required }) => (
                 <div key={name}>
                   <label className="block text-xs text-gray-500 mb-1">{label}{required ? " *" : "（選填）"}</label>
-                  <input
-                    type="datetime-local"
-                    name={name}
-                    required={required}
-                    value={form[name]}
-                    onChange={handleChange}
-                    step={1800}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      required={required}
+                      value={slotParts[name].date}
+                      onChange={e => updateSlot(name, "date", e.target.value)}
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <select
+                      required={required}
+                      value={slotParts[name].time}
+                      onChange={e => updateSlot(name, "time", e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">時間</option>
+                      {TIME_OPTIONS.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               ))}
             </div>
