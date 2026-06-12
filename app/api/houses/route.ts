@@ -28,6 +28,28 @@ type House = { name: string; type: string; area: string };
 let cache: { at: number; data: House[] } | null = null;
 const TTL_MS = 10 * 60 * 1000; // 10 分鐘
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// 單頁抓取，含 3 次重試 + 退避（Ragic 對同 key 高頻請求會限流）
+async function fetchPage(key: string, url: string): Promise<Record<string, string>[]> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { Authorization: `Basic ${key}` } });
+      if (!res.ok) throw new Error(`Ragic ${res.status}`);
+      const json = await res.json();
+      // 限流時 Ragic 可能回非資料物件，過濾掉沒有 _ragicId 的雜訊
+      return Object.values(json as Record<string, Record<string, string>>).filter(
+        (r) => r && typeof r === "object" && "_ragicId" in r
+      );
+    } catch (e) {
+      lastErr = e;
+      await sleep(300 * (attempt + 1));
+    }
+  }
+  throw lastErr;
+}
+
 // 用全文搜尋抓某個縣市的所有資料（含分頁），fts 免 field ID 又快
 async function fetchCity(key: string, city: string): Promise<Record<string, string>[]> {
   const all: Record<string, string>[] = [];
@@ -35,9 +57,7 @@ async function fetchCity(key: string, city: string): Promise<Record<string, stri
     const url =
       `${RAGIC_BASE}/${FORM_PATH}?api&subtable=0&limit=${PAGE_SIZE}&offset=${offset}` +
       `&fts=${encodeURIComponent(city)}`;
-    const res = await fetch(url, { headers: { Authorization: `Basic ${key}` } });
-    if (!res.ok) throw new Error(`Ragic ${res.status}`);
-    const records = Object.values((await res.json()) as Record<string, Record<string, string>>);
+    const records = await fetchPage(key, url);
     all.push(...records);
     if (records.length < PAGE_SIZE) break;
   }
@@ -88,7 +108,10 @@ export async function GET() {
 
   try {
     const houses = await fetchAllListed(key);
-    cache = { at: Date.now(), data: houses };
+    // 空結果視為異常（限流/暫時失敗），不快取，讓下次自動重試
+    if (houses.length > 0) {
+      cache = { at: Date.now(), data: houses };
+    }
     return NextResponse.json({ success: true, cached: false, houses });
   } catch (err) {
     // 抓取失敗時，若有舊快取就回舊資料
