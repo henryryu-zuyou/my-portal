@@ -22,7 +22,7 @@ function keepByDistrict(city: string, district: string): boolean {
   return !!districts && districts.includes(district);
 }
 
-type House = { name: string; type: string; area: string };
+type House = { name: string; type: string; area: string; addr: string };
 
 // 記憶體快取，避免每次載入 /links 都打 Ragic
 let cache: { at: number; data: House[] } | null = null;
@@ -82,7 +82,12 @@ async function fetchAllListed(key: string): Promise<House[]> {
         !seen.has(name)
       ) {
         seen.add(name);
-        out.push({ name, type: r["房源型態"] || "", area: r["縣市+行政區"] || "" });
+        out.push({
+          name,
+          type: r["房源型態"] || "",
+          area: r["縣市+行政區"] || "",
+          addr: r["完整地址"] || "",
+        });
       }
     }
   }

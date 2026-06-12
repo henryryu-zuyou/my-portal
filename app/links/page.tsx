@@ -1,7 +1,18 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 
-type House = { name: string; type: string; area: string };
+type House = { name: string; type: string; area: string; addr: string };
+
+// 房源名稱去掉結尾的「實驗室」
+const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
+
+// 連結要帶入、並記錄到 Sheet/Chat/日曆的「詢問物件」格式：
+// 去掉實驗室 +（完整地址）。例：大業二275（桃園市桃園區大業路二段275號）
+const houseLabel = (h: House) => {
+  const loc = h.addr || h.area;
+  const base = stripName(h.name);
+  return loc ? `${base}（${loc}）` : base;
+};
 
 export default function LinksPage() {
   const [houses, setHouses] = useState<House[]>([]);
@@ -23,12 +34,12 @@ export default function LinksPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const makeLink = (name: string) =>
-    `${origin}/inquiry?house=${encodeURIComponent(name)}`;
+  const makeLink = (label: string) =>
+    `${origin}/inquiry?house=${encodeURIComponent(label)}`;
 
-  const copy = async (name: string) => {
-    await navigator.clipboard.writeText(makeLink(name));
-    setCopied(name);
+  const copy = async (h: House) => {
+    await navigator.clipboard.writeText(makeLink(houseLabel(h)));
+    setCopied(h.name);
     setTimeout(() => setCopied(""), 1500);
   };
 
@@ -39,6 +50,7 @@ export default function LinksPage() {
       h =>
         h.name.toLowerCase().includes(q) ||
         h.area.toLowerCase().includes(q) ||
+        h.addr.toLowerCase().includes(q) ||
         h.type.toLowerCase().includes(q)
     );
   }, [houses, query]);
@@ -78,11 +90,11 @@ export default function LinksPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-800 truncate">🏠 {h.name}</p>
                     <p className="text-xs text-gray-400 truncate">
-                      {[h.area, h.type].filter(Boolean).join("・")}
+                      連結帶入：{houseLabel(h)}
                     </p>
                   </div>
                   <button
-                    onClick={() => copy(h.name)}
+                    onClick={() => copy(h)}
                     className="shrink-0 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition"
                   >
                     {copied === h.name ? "已複製 ✓" : "複製連結"}
