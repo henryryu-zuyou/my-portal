@@ -6,10 +6,19 @@ type House = { name: string; type: string; area: string; addr: string };
 // 房源名稱去掉結尾的「實驗室」
 const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
 
+// 地址只截取到「路段」為止：保留「X段」，去掉門牌號/巷/弄/衖/樓
+const roadSection = (addr: string) => {
+  if (!addr) return addr;
+  // 切在第一個「阿拉伯數字(後面不是段)」或 巷/弄/衖/號/樓 之前
+  const m = addr.match(/[0-9０-９]+(?!段)|[巷弄衖號樓]/);
+  const cut = m ? addr.slice(0, m.index) : addr;
+  return cut.replace(/[\s,，]+$/, "").trim();
+};
+
 // 連結要帶入、並記錄到 Sheet/Chat/日曆的「詢問物件」格式：
-// 去掉實驗室 +（完整地址）。例：大業二275（桃園市桃園區大業路二段275號）
+// 去掉實驗室 +（路段）。例：大業二275（桃園市桃園區大業路二段）
 const houseLabel = (h: House) => {
-  const loc = h.addr || h.area;
+  const loc = roadSection(h.addr) || h.area;
   const base = stripName(h.name);
   return loc ? `${base}（${loc}）` : base;
 };
