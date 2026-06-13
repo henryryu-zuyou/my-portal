@@ -44,6 +44,7 @@ const formatDateTime = (val: string) => {
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false); // 送出前確認視窗
   const [todayStr, setTodayStr] = useState(""); // 今日日期，限制看房日期不能選過去
   // 看房時段拆成「日期 + 時間」兩格，再合併成 viewingSlotN 的 datetime 字串
   const [slotParts, setSlotParts] = useState({
@@ -92,8 +93,15 @@ export default function InquiryPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // 按送出 → 先彈出確認視窗（此時原生必填驗證已通過）
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  // 確認視窗按「確定送出」→ 真正送出
+  const doSubmit = () => {
+    setShowConfirm(false);
     setSubmitted(true);
     fetch("/api/submit", {
       method: "POST",
@@ -164,7 +172,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">請問怎麼稱呼？ *</label>
             <input
               name="name" required value={form.name} onChange={handleChange}
-              placeholder="請填寫全名，例：王大明 / 陳小美"
+              placeholder="例：王先生 / 陳小姐"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -372,6 +380,48 @@ export default function InquiryPage() {
           </button>
         </form>
       </div>
+
+      {/* 送出前確認視窗 */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md max-h-[85vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-800 mb-1">請確認填寫內容</h2>
+            <p className="text-xs text-gray-500 mb-4">確認無誤後按「確定送出」，需修改請按「返回修改」</p>
+            <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
+              {form.house && <p>🏠 詢問物件：{form.house}</p>}
+              <p>🙋 稱呼：{form.name}</p>
+              <p>📅 預計入住：{form.moveInDate}</p>
+              <p>⏳ 租期：{form.leaseDuration}</p>
+              <p>👥 大人人數：{form.adults} 人</p>
+              <p>👶 小孩人數：{form.children || 0} 人</p>
+              <p>🐾 寵物：{form.hasPet}{form.petType ? `（${form.petType}）` : ""}</p>
+              <p>💼 職業：{form.occupation}</p>
+              <p>🚬 抽菸：{form.isSmoker}</p>
+              <p>📄 需租補/入籍/報稅：{form.needSubsidy.join("、") || "未填寫"}</p>
+              <p>💰 租金預算：NT$ {form.budget}</p>
+              <p>🚗 汽車位：{form.needParking}</p>
+              <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
+              <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
+              <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
+              {form.note && <p>📝 其他說明：{form.note}</p>}
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition"
+              >
+                返回修改
+              </button>
+              <button
+                onClick={doSubmit}
+                className="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+              >
+                確定送出
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
