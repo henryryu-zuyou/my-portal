@@ -18,6 +18,7 @@ const initialForm = {
   viewingSlot1: "",
   viewingSlot2: "",
   viewingSlot3: "",
+  note: "",
 };
 
 // 看房時間下拉選項：08:00 ~ 23:00，每 30 分鐘一個
@@ -71,7 +72,7 @@ export default function InquiryPage() {
     setTodayStr(`${yyyy}-${mm}-${dd}`);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
@@ -113,7 +114,7 @@ export default function InquiryPage() {
             <p>📅 預計入住：{form.moveInDate}</p>
             <p>⏳ 租期：{form.leaseDuration}</p>
             <p>👥 大人人數：{form.adults} 人</p>
-            <p>👶 小孩人數：{form.children} 人</p>
+            <p>👶 小孩人數：{form.children || 0} 人</p>
             <p>🐾 寵物：{form.hasPet}{form.petType ? `（${form.petType}）` : ""}</p>
             <p>💼 職業：{form.occupation}</p>
             <p>🚬 抽菸：{form.isSmoker}</p>
@@ -123,6 +124,7 @@ export default function InquiryPage() {
             <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
             <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
             <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
+            {form.note && <p>📝 其他說明：{form.note}</p>}
           </div>
           <button
             onClick={() => {
@@ -162,7 +164,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">請問怎麼稱呼？ *</label>
             <input
               name="name" required value={form.name} onChange={handleChange}
-              placeholder="例：王先生 / 陳小姐"
+              placeholder="請填寫全名，例：王大明 / 陳小美"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -180,7 +182,7 @@ export default function InquiryPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">2. 預計租期多久？ *</label>
             <div className="flex flex-col gap-2">
-              {["一年以下", "一年", "二年", "三年"].map(v => (
+              {["一年", "二年", "三年"].map(v => (
                 <label key={v} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="radio" name="leaseDuration" value={v} checked={form.leaseDuration === v} onChange={handleChange} required />
                   {v}
@@ -204,9 +206,9 @@ export default function InquiryPage() {
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1">小孩</label>
+                <label className="block text-xs text-gray-500 mb-1">小孩（選填）</label>
                 <select
-                  name="children" required value={form.children} onChange={handleChange}
+                  name="children" value={form.children} onChange={handleChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">請選擇</option>
@@ -350,6 +352,16 @@ export default function InquiryPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* 其他說明 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">11. 其他說明（選填）</label>
+            <textarea
+              name="note" value={form.note} onChange={handleChange} rows={3}
+              placeholder="有其他需求或想補充的資訊，歡迎填寫"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            />
           </div>
 
           <button

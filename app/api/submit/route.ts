@@ -25,6 +25,7 @@ function buildChatMessage(d: Record<string, unknown>) {
     `💰 預算：NT$ ${s(d.budget)}`,
     `🚗 汽車位：${s(d.needParking)}`,
     `🗓 看房時段：${s(d.viewingSlot1)}｜${s(d.viewingSlot2)}｜${s(d.viewingSlot3)}`,
+    d.note ? `📝 其他說明：${s(d.note)}` : null,
   ]
     .filter(Boolean)
     .join("\n");
