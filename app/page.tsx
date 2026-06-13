@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const router = useRouter();
 
+  const logout = async () => {
+    await fetch("/api/logout", { method: "POST" }).catch(() => {});
+    router.replace("/login");
+  };
+
   const options = [
     {
       href: "/inquiry",
@@ -42,6 +47,13 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        <button
+          onClick={logout}
+          className="mt-6 text-xs text-gray-400 hover:text-gray-600 transition"
+        >
+          登出
+        </button>
       </div>
     </div>
   );
