@@ -28,7 +28,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-10 px-4">
       <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm text-center">
         <div className="text-4xl mb-3">🏠</div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">工作入口</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-1">工作助手</h1>
         <p className="text-sm text-gray-500 mb-8">請選擇要使用的功能</p>
 
         <div className="flex flex-col gap-3">
