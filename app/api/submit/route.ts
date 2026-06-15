@@ -6,14 +6,24 @@ const APPS_SCRIPT_URL =
 // 在 .env.local 設定 GOOGLE_CHAT_WEBHOOK_URL，留空則不發 Chat 通知
 const CHAT_WEBHOOK_URL = process.env.GOOGLE_CHAT_WEBHOOK_URL;
 
-// 組出要發到 Google Chat 的訊息文字（只保留核心欄位）
+// 組出要發到 Google Chat 的訊息文字
 function buildChatMessage(d: Record<string, unknown>) {
   const s = (v: unknown) => (v === undefined || v === null || v === "" ? "未填寫" : String(v));
+  const subsidy = Array.isArray(d.needSubsidy) ? d.needSubsidy.join("、") : s(d.needSubsidy);
+  const pet = d.hasPet === "有" ? `有（${s(d.petType)}）` : s(d.hasPet);
   return [
     "📋 *有新的房客詢問！*",
     d.house ? `🏠 詢問物件：*${s(d.house)}*` : null,
     `🙋 稱呼：${s(d.name)}`,
+    `📅 預計入住：${s(d.moveInDate)}`,
+    `⏳ 租期：${s(d.leaseDuration)}`,
+    `👥 人數：大人 ${s(d.adults)} / 小孩 ${s(d.children)}`,
+    `🐾 寵物：${pet}`,
+    `💼 職業：${s(d.occupation)}`,
+    `🚬 抽菸：${s(d.isSmoker)}`,
+    `📄 租補/入籍/報稅：${subsidy}`,
     `💰 預算：NT$ ${s(d.budget)}`,
+    `🚗 汽車位：${s(d.needParking)}`,
     `🗓 看房時段：${s(d.viewingSlot1)}｜${s(d.viewingSlot2)}｜${s(d.viewingSlot3)}`,
     d.note ? `📝 其他說明：${s(d.note)}` : null,
   ]
