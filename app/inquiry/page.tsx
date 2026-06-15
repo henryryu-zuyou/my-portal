@@ -119,16 +119,7 @@ export default function InquiryPage() {
           <p className="text-gray-500 text-sm mb-6">感謝 {form.name} 填寫資料，我們會盡快與您聯繫。</p>
           <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
             {form.house && <p>🏠 詢問物件：{form.house}</p>}
-            <p>📅 預計入住：{form.moveInDate}</p>
-            <p>⏳ 租期：{form.leaseDuration}</p>
-            <p>👥 大人人數：{form.adults} 人</p>
-            <p>👶 小孩人數：{form.children || 0} 人</p>
-            <p>🐾 寵物：{form.hasPet}{form.petType ? `（${form.petType}）` : ""}</p>
-            <p>💼 職業：{form.occupation}</p>
-            <p>🚬 抽菸：{form.isSmoker}</p>
-            <p>📄 需租補/入籍/報稅：{form.needSubsidy.join("、") || "未填寫"}</p>
             <p>💰 租金預算：NT$ {form.budget}</p>
-            <p>🚗 汽車位：{form.needParking}</p>
             <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
             <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
             <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
