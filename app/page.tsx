@@ -22,6 +22,12 @@ export default function Home() {
       title: "詢問連結產生器",
       desc: "選擇房源、產生專屬詢問連結",
     },
+    {
+      href: "/scrm",
+      icon: "👤",
+      title: "SCRM 補 UID／改名",
+      desc: "每週一/四：補 LINE UID＋改真實姓名",
+    },
   ];
 
   return (
