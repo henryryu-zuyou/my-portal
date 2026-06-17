@@ -11,6 +11,12 @@ export default function Home() {
 
   const options = [
     {
+      href: "/listing",
+      icon: "🏢",
+      title: "官網上架",
+      desc: "上傳 PDF／照片，產生上架資料包",
+    },
+    {
       href: "/inquiry",
       icon: "📋",
       title: "房客詢問表單",
