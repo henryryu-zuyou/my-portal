@@ -1,17 +1,8 @@
 "use client";
 import { useState, useMemo } from "react";
 
-// 租金內含費用選項
-const FEE_OPTIONS = ["水費", "電費", "瓦斯費", "網路費", "第四台"];
-// 其他條件選項
-const FLAG_OPTIONS = [
-  "可報稅",
-  "可設戶籍（入籍）",
-  "可租補",
-  "可養寵物",
-  "有電梯",
-  "垃圾處理／代收",
-];
+// 押金固定 2 個月（公司慣例，唯讀顯示）
+const DEPOSIT_MONTH = "2";
 
 type Photo = { file: File; url: string };
 
@@ -22,25 +13,9 @@ export default function ListingPage() {
   const [pdfUrl, setPdfUrl] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
 
-  // 2. PDF 常缺／需確認的補充資訊（依序往下）
-  const [address, setAddress] = useState(""); // 以水電帳單為準
-  const [rent, setRent] = useState("");
-  const [mgmtFee, setMgmtFee] = useState(""); // 含車位
-  const [depositMonth, setDepositMonth] = useState("");
-  const [minLease, setMinLease] = useState("");
-  const [area, setArea] = useState(""); // m²
-  const [atFloor, setAtFloor] = useState("");
-  const [totalFloor, setTotalFloor] = useState(""); // 總樓層（PDF 常缺）
-  const [bedroom, setBedroom] = useState("");
-  const [living, setLiving] = useState("");
-  const [bathroom, setBathroom] = useState("");
-  const [balcony, setBalcony] = useState("");
-  const [parking, setParking] = useState("個人停車位");
-  const [gender, setGender] = useState("男女皆可");
-  const [foreigner, setForeigner] = useState(true);
-  const [feeIncluded, setFeeIncluded] = useState<string[]>([]);
-  const [flags, setFlags] = useState<string[]>([]);
-  const [note, setNote] = useState("");
+  // 2. 補充資訊（只留 PDF 完全沒有的）
+  const [area, setArea] = useState(""); // 空間大小 m²
+  const [totalFloor, setTotalFloor] = useState(""); // 總樓層
 
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -64,9 +39,6 @@ export default function ListingPage() {
     });
   };
 
-  const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
-    set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
-
   const summary = useMemo(() => {
     const L: string[] = [];
     L.push(`【官網上架資料包】${name || "（未命名）"}`);
@@ -76,23 +48,12 @@ export default function ListingPage() {
     L.push(`代管約 PDF：${pdf ? pdf.name : "（未上傳）"}`);
     L.push(`照片：${photos.length} 張`);
     L.push("");
-    L.push("── 補充資訊（PDF 常缺／需確認）──");
-    L.push(`地址（以水電帳單為準）：${address || "—"}`);
-    L.push(`月租：${rent || "—"}`);
-    L.push(`管理費（含車位）：${mgmtFee || "—"}`);
-    L.push(`押金（月）：${depositMonth || "—"}`);
-    L.push(`最短租期（月）：${minLease || "—"}`);
+    L.push("── 補充資訊（PDF 沒有，需另填）──");
     L.push(`空間大小（m²）：${area || "—"}`);
-    L.push(`所在樓層／總樓層：${atFloor || "—"} / ${totalFloor || "—"}`);
-    L.push(`格局：${bedroom || "—"} 房 ${living || "—"} 廳 ${bathroom || "—"} 衛 ${balcony || "—"} 陽台`);
-    L.push(`停車位：${parking}`);
-    L.push(`性別限制：${gender}`);
-    L.push(`外國租客：${foreigner ? "可" : "不可"}`);
-    L.push(`租金內含：${feeIncluded.length ? feeIncluded.join("、") : "無"}`);
-    L.push(`其他：${flags.length ? flags.join("、") : "無"}`);
-    if (note) L.push(`備註：${note}`);
+    L.push(`總樓層：${totalFloor || "—"}`);
+    L.push(`押金（月）：${DEPOSIT_MONTH}（固定）`);
     return L.join("\n");
-  }, [name, pdf, photos, address, rent, mgmtFee, depositMonth, minLease, area, atFloor, totalFloor, bedroom, living, bathroom, balcony, parking, gender, foreigner, feeIncluded, flags, note]);
+  }, [name, pdf, photos, area, totalFloor]);
 
   const copy = async () => {
     await navigator.clipboard.writeText(summary);
@@ -109,7 +70,6 @@ export default function ListingPage() {
     URL.revokeObjectURL(a.href);
   };
 
-  // 欄位元件
   const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500";
   const label = "block text-sm font-medium text-gray-700 mb-1";
 
@@ -178,119 +138,26 @@ export default function ListingPage() {
           </div>
 
           <hr className="border-gray-100" />
-          <p className="text-sm font-semibold text-gray-700">補充資訊（PDF 常缺／需確認，依序填寫）</p>
-
-          <div>
-            <label className={label}>地址（以水電帳單為準）</label>
-            <input className={field} value={address} onChange={e => setAddress(e.target.value)} placeholder="例：桃園市龜山區樂善三路80號14樓" />
-          </div>
+          <p className="text-sm font-semibold text-gray-700">補充資訊（PDF 沒有，需另填）</p>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={label}>月租（NT$）</label>
-              <input className={field} inputMode="numeric" value={rent} onChange={e => setRent(e.target.value)} placeholder="25000" />
-            </div>
-            <div>
-              <label className={label}>管理費（含車位，NT$/月）</label>
-              <input className={field} inputMode="numeric" value={mgmtFee} onChange={e => setMgmtFee(e.target.value)} placeholder="2348" />
-            </div>
-            <div>
-              <label className={label}>押金（月）</label>
-              <select className={field} value={depositMonth} onChange={e => setDepositMonth(e.target.value)}>
-                <option value="">—</option>
-                {["0.5", "1.0", "1.5", "2.0", "2.5", "3.0"].map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={label}>最短租期（月）</label>
-              <input className={field} inputMode="numeric" value={minLease} onChange={e => setMinLease(e.target.value)} placeholder="12" />
-            </div>
             <div>
               <label className={label}>空間大小（m²）</label>
               <input className={field} inputMode="numeric" value={area} onChange={e => setArea(e.target.value)} placeholder="70" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className={label}>所在樓層</label>
-                <input className={field} inputMode="numeric" value={atFloor} onChange={e => setAtFloor(e.target.value)} placeholder="14" />
-              </div>
-              <div>
-                <label className={label}>總樓層</label>
-                <input className={field} inputMode="numeric" value={totalFloor} onChange={e => setTotalFloor(e.target.value)} placeholder="30" />
-              </div>
+            <div>
+              <label className={label}>總樓層</label>
+              <input className={field} inputMode="numeric" value={totalFloor} onChange={e => setTotalFloor(e.target.value)} placeholder="30" />
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
-            <div>
-              <label className={label}>房</label>
-              <input className={field} inputMode="numeric" value={bedroom} onChange={e => setBedroom(e.target.value)} placeholder="2" />
-            </div>
-            <div>
-              <label className={label}>廳</label>
-              <input className={field} inputMode="numeric" value={living} onChange={e => setLiving(e.target.value)} placeholder="2" />
-            </div>
-            <div>
-              <label className={label}>衛</label>
-              <input className={field} inputMode="numeric" value={bathroom} onChange={e => setBathroom(e.target.value)} placeholder="2" />
-            </div>
-            <div>
-              <label className={label}>陽台</label>
-              <input className={field} inputMode="numeric" value={balcony} onChange={e => setBalcony(e.target.value)} placeholder="1" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={label}>停車位</label>
-              <select className={field} value={parking} onChange={e => setParking(e.target.value)}>
-                {["無", "個人停車位", "附近有停車場"].map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={label}>性別限制</label>
-              <select className={field} value={gender} onChange={e => setGender(e.target.value)}>
-                {["男女皆可", "限男", "限女"].map(v => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={foreigner} onChange={e => setForeigner(e.target.checked)} />
-            歡迎外國租客
-          </label>
-
+          {/* 押金固定 2 個月（唯讀顯示） */}
           <div>
-            <label className={label}>租金內含費用</label>
-            <div className="flex flex-wrap gap-2">
-              {FEE_OPTIONS.map(o => (
-                <button
-                  type="button"
-                  key={o}
-                  onClick={() => toggle(feeIncluded, setFeeIncluded, o)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${feeIncluded.includes(o) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-300"}`}
-                >{o}</button>
-              ))}
+            <label className={label}>押金（月）</label>
+            <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700 flex items-center justify-between">
+              <span className="font-medium">2 個月</span>
+              <span className="text-xs text-gray-400">固定</span>
             </div>
-          </div>
-
-          <div>
-            <label className={label}>其他條件</label>
-            <div className="flex flex-wrap gap-2">
-              {FLAG_OPTIONS.map(o => (
-                <button
-                  type="button"
-                  key={o}
-                  onClick={() => toggle(flags, setFlags, o)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${flags.includes(o) ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-300"}`}
-                >{o}</button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className={label}>備註（選填）</label>
-            <textarea className={field} rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="其他需特別註記的事項" />
           </div>
 
           <button
