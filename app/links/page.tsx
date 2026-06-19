@@ -3,6 +3,9 @@ import { useState, useEffect, useMemo } from "react";
 
 type House = { name: string; type: string; area: string; addr: string };
 
+// 前端清單快取 key（B：開頁先畫上次的清單，使用者不用等）
+const CACHE_KEY = "links_houses_v1";
+
 // 房源名稱去掉結尾的「實驗室」
 const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
 
@@ -33,13 +36,33 @@ export default function LinksPage() {
 
   useEffect(() => {
     setOrigin(window.location.origin);
+
+    // 先畫上次抓到的清單（localStorage），開頁即顯示、不必等 API
+    let hadCache = false;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const arr = JSON.parse(cached) as House[];
+        if (Array.isArray(arr) && arr.length) {
+          setHouses(arr);
+          setLoading(false);
+          hadCache = true;
+        }
+      }
+    } catch {}
+
+    // 背景抓最新；成功就覆蓋畫面並更新快取
     fetch("/api/houses")
       .then(r => r.json())
       .then(d => {
-        if (d.success) setHouses(d.houses);
-        else setError(d.error || "讀取房源失敗");
+        if (d.success) {
+          setHouses(d.houses);
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify(d.houses)); } catch {}
+        } else if (!hadCache) {
+          setError(d.error || "讀取房源失敗");
+        }
       })
-      .catch(() => setError("讀取房源失敗"))
+      .catch(() => { if (!hadCache) setError("讀取房源失敗"); })
       .finally(() => setLoading(false));
   }, []);
 

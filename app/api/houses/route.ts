@@ -1,32 +1,18 @@
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 
-// Ragic 房源資訊 (housing/70) — 物件層級房源清單
+// 房源資訊 (housing/70) — 物件層級房源清單
 const RAGIC_BASE = "https://ap14.ragic.com/zuyou2022";
 const FORM_PATH = "housing/70";
 const PAGE_SIZE = 1000;
 
-// 行政區篩選：只保留這些區的房源（日後要增減直接改這裡）
-// 規則：整個桃園市，或新北市的指定行政區
-const KEEP_WHOLE_CITIES = ["桃園市"];
-const KEEP_DISTRICTS_BY_CITY: Record<string, string[]> = {
-  新北市: ["林口區", "樹林區", "鶯歌區", "土城區"],
-};
-
-// 需要向 Ragic 全文查詢的縣市（= 整市保留的 + 有指定行政區的）。
-// 用 fts 只抓這幾個縣市的資料，避免掃全表 3000+ 筆（單頁約 6 秒）。
-const QUERY_CITIES = [...KEEP_WHOLE_CITIES, ...Object.keys(KEEP_DISTRICTS_BY_CITY)];
-
-function keepByDistrict(city: string, district: string): boolean {
-  if (KEEP_WHOLE_CITIES.includes(city)) return true;
-  const districts = KEEP_DISTRICTS_BY_CITY[city];
-  return !!districts && districts.includes(district);
-}
+// 篩選條件：管理公司 = 豈家(桃園) 且 網站上架狀態 = 已上架
+// 注意：管理公司字面值帶「半形括號」，必須是 豈家(桃園)，少字會回 0 筆且不報錯。
+const KEEP_COMPANY = "豈家(桃園)";
+// 用全文搜尋只抓「豈家」相關紀錄，避免掃全表 3000+ 筆（單頁約 6 秒）。
+const FTS_TERM = "豈家";
 
 type House = { name: string; type: string; area: string; addr: string };
-
-// 記憶體快取，避免每次載入 /links 都打 Ragic
-let cache: { at: number; data: House[] } | null = null;
-const TTL_MS = 10 * 60 * 1000; // 10 分鐘
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -50,35 +36,22 @@ async function fetchPage(key: string, url: string): Promise<Record<string, strin
   throw lastErr;
 }
 
-// 用全文搜尋抓某個縣市的所有資料（含分頁），fts 免 field ID 又快
-async function fetchCity(key: string, city: string): Promise<Record<string, string>[]> {
-  const all: Record<string, string>[] = [];
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const url =
-      `${RAGIC_BASE}/${FORM_PATH}?api&subtable=0&limit=${PAGE_SIZE}&offset=${offset}` +
-      `&fts=${encodeURIComponent(city)}`;
-    const records = await fetchPage(key, url);
-    all.push(...records);
-    if (records.length < PAGE_SIZE) break;
-  }
-  return all;
-}
-
 async function fetchAllListed(key: string): Promise<House[]> {
   const out: House[] = [];
   const seen = new Set<string>();
 
-  // 逐縣市查詢（序列，避免 Ragic 對同 key 並發限流）
-  for (const city of QUERY_CITIES) {
-    const records = await fetchCity(key, city);
+  // fts=豈家 抓取（含分頁），再以精準條件過濾
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const url =
+      `${RAGIC_BASE}/${FORM_PATH}?api&subtable=0&limit=${PAGE_SIZE}&offset=${offset}` +
+      `&fts=${encodeURIComponent(FTS_TERM)}`;
+    const records = await fetchPage(key, url);
     for (const r of records) {
       const name = (r["房源名稱"] || "").trim();
-      const c = r["縣市"] || "";
-      const district = r["行政區"] || "";
       if (
         (r["網站上架狀態"] || "") === "已上架" &&
+        (r["管理公司"] || "") === KEEP_COMPANY &&
         name &&
-        keepByDistrict(c, district) &&
         !seen.has(name)
       ) {
         seen.add(name);
@@ -90,42 +63,34 @@ async function fetchAllListed(key: string): Promise<House[]> {
         });
       }
     }
+    if (records.length < PAGE_SIZE) break;
   }
 
   // 依名稱排序，方便瀏覽
   out.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+  // 空結果視為異常（限流/暫時失敗），丟出錯誤 → 不寫入快取，下次自動重試
+  if (out.length === 0) throw new Error("Ragic 回傳 0 筆（疑似限流），不快取");
   return out;
 }
 
+// A：跨「冷啟動」的持久快取。
+// unstable_cache 存進 Next.js Data Cache（不在函式記憶體，Vercel 函式休眠/重啟後仍在），
+// 並自動 stale-while-revalidate：過期也先回舊資料，背景再更新。
+const getCachedHouses = unstable_cache(
+  async (): Promise<House[]> => {
+    const key = process.env.RAGIC_API_KEY;
+    if (!key) throw new Error("RAGIC_API_KEY 未設定");
+    return fetchAllListed(key);
+  },
+  ["links-houses-qijia-taoyuan"],
+  { revalidate: 600 } // 10 分鐘
+);
+
 export async function GET() {
-  const key = process.env.RAGIC_API_KEY;
-  if (!key) {
-    return NextResponse.json(
-      { success: false, error: "RAGIC_API_KEY 未設定" },
-      { status: 500 }
-    );
-  }
-
-  // 命中快取
-  if (cache && Date.now() - cache.at < TTL_MS) {
-    return NextResponse.json({ success: true, cached: true, houses: cache.data });
-  }
-
   try {
-    const houses = await fetchAllListed(key);
-    // 空結果視為異常（限流/暫時失敗），不快取，讓下次自動重試
-    if (houses.length > 0) {
-      cache = { at: Date.now(), data: houses };
-    }
-    return NextResponse.json({ success: true, cached: false, houses });
+    const houses = await getCachedHouses();
+    return NextResponse.json({ success: true, houses });
   } catch (err) {
-    // 抓取失敗時，若有舊快取就回舊資料
-    if (cache) {
-      return NextResponse.json({ success: true, stale: true, houses: cache.data });
-    }
-    return NextResponse.json(
-      { success: false, error: String(err) },
-      { status: 502 }
-    );
+    return NextResponse.json({ success: false, error: String(err) }, { status: 502 });
   }
 }
