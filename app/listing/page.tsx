@@ -27,6 +27,11 @@ export default function ListingPage() {
   const [results, setResults] = useState<House[]>([]);
   const [searching, setSearching] = useState(false);
   const [house, setHouse] = useState<House | null>(null);
+  // 全新房源（不在 Ragic）手動輸入模式
+  const [newMode, setNewMode] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newAddr, setNewAddr] = useState("");
+  const [newCompany, setNewCompany] = useState("");
 
   // 共用輸入
   const [pdf, setPdf] = useState<File | null>(null);
@@ -79,7 +84,14 @@ export default function ListingPage() {
   };
 
   const effectiveMoveIn = moveInDate || contractStart;
-  const canPortal = !!(house && pdf) && !portalLoading;
+  // ① 官網包用的房源：既有 Ragic 房源，或全新手動房源（需有名稱）
+  const effHouse: House | null =
+    house ??
+    (newMode && newName.trim()
+      ? { ragicId: "", name: newName.trim(), addr: newAddr.trim(), company: newCompany.trim(), listed: false }
+      : null);
+  const canPortal = !!(effHouse && pdf) && !portalLoading;
+  // ② 回填 Ragic 目前僅支援「已在 Ragic 的房源」（需選定既有房源）
   const canSubmit = !!(house && pdf && contractStart && contractEnd && caseNo) && !submitting;
 
   // ① 產生官網上架包
@@ -90,9 +102,9 @@ export default function ListingPage() {
     try {
       const fd = new FormData();
       fd.set("pdf", pdf!);
-      fd.set("houseName", house!.name);
-      fd.set("houseAddr", house!.addr);
-      fd.set("houseCompany", house!.company);
+      fd.set("houseName", effHouse!.name);
+      fd.set("houseAddr", effHouse!.addr);
+      fd.set("houseCompany", effHouse!.company);
       fd.set("totalFloor", totalFloor);
       fd.set("area", area);
       fd.set("genderLimit", genderLimit);
@@ -167,6 +179,25 @@ export default function ListingPage() {
                 </span>
                 <button onClick={() => setHouse(null)} className="ml-2 text-xs text-gray-400 hover:text-red-500 shrink-0">更換</button>
               </div>
+            ) : newMode ? (
+              <div className="border border-blue-200 bg-blue-50/50 rounded-lg p-3 flex flex-col gap-3">
+                <p className="text-xs text-blue-700 font-medium">全新房源（不在 Ragic）— 手動輸入</p>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">房源名稱 *</label>
+                  <input className={field} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="例：慕夏 4F" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">地址</label>
+                  <input className={field} value={newAddr} onChange={(e) => setNewAddr(e.target.value)} placeholder="例：桃園市八德區正福三街58號4樓" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">管理公司（選填）</label>
+                  <input className={field} value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="例：豈家(桃園)" />
+                </div>
+                <button type="button" onClick={() => setNewMode(false)} className="self-start text-xs text-gray-500 hover:text-gray-700 underline">
+                  ← 改用 Ragic 既有房源搜尋
+                </button>
+              </div>
             ) : (
               <>
                 <div className="flex gap-2">
@@ -193,6 +224,9 @@ export default function ListingPage() {
                   </div>
                 )}
                 <p className="text-xs text-gray-400 mt-1">※ 需從搜尋結果點選才算選定；只打字不算。</p>
+                <button type="button" onClick={() => setNewMode(true)} className="mt-1 text-xs text-blue-600 hover:text-blue-700 underline">
+                  ＋ 全新房源（不在 Ragic，手動輸入）
+                </button>
               </>
             )}
           </div>
@@ -346,6 +380,11 @@ export default function ListingPage() {
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-lg mx-auto mt-6">
         <h2 className="text-base font-bold text-gray-800 mb-1">② 回填 Ragic</h2>
         <p className="text-xs text-gray-500 mb-4">把屋主、房源、收款帳戶資料補填進 Ragic（housing/70）。需填好契約起迄日與原案場編號。</p>
+        {newMode && (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            全新房源的「新建 Ragic 房源」功能開發中；目前 ② 僅支援已在 Ragic 的房源。新房源請先用 ① 完成官網上架。
+          </p>
+        )}
         <button
           type="button"
           onClick={submit}
