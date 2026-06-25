@@ -164,7 +164,7 @@ export default function ListingPage() {
         <a href="/" className="text-xs text-gray-400 hover:text-gray-600">‹ 回工作助手</a>
         <h1 className="text-xl font-bold text-gray-800 mt-2 mb-1">🏢 官網上架</h1>
         <p className="text-sm text-gray-500 mb-6">
-          選定房源、上傳「線上版」代管約 PDF：先產生<b>官網上架欄位包</b>（照填 zuyou.com.tw 七分頁），再把資料<b>回填 Ragic</b>。
+          流程：<b>①</b> 上傳線上版代管約 PDF → 產生<b>官網上架包</b>照填 zuyou.com.tw；上架後房源會同步進 Ragic → <b>②</b> 搜尋選定該房源、<b>回填</b>屋主/收款等資料。全新房源在①可手動輸入、免先進 Ragic。
         </p>
 
         <div className="flex flex-col gap-5">
@@ -382,7 +382,7 @@ export default function ListingPage() {
         <p className="text-xs text-gray-500 mb-4">把屋主、房源、收款帳戶資料補填進 Ragic（housing/70）。需填好契約起迄日與原案場編號。</p>
         {newMode && (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-            全新房源的「新建 Ragic 房源」功能開發中；目前 ② 僅支援已在 Ragic 的房源。新房源請先用 ① 完成官網上架。
+            全新房源請先用 ① 完成官網上架；上架後房源會<b>同步進 Ragic</b>。屆時回到本頁，上方改用<b>搜尋選定</b>該房源，再按 ② 回填即可（②不需另建房源）。
           </p>
         )}
         <button
