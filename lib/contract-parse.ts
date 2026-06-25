@@ -80,7 +80,7 @@ export function parseContract(rawText: string): ParsedContract {
     owner: {
       name: grab(t, /委託人\s*[:：]\s*([^\s受託(（]+)/),
       idNumber: grab(t, /身分證字號\s*[:：]\s*([A-Z][0-9]{9})/),
-      phone: grab(t, /聯絡電話\s*[:：]\s*(09\d{8})/),
+      phone: grab(t, /聯絡電話\s*[:：]\s*(09[\d\s-]{8,12})/).replace(/[\s-]/g, ""),
       email: grab(t, /電子郵件信箱\s*[:：]\s*([\w.+-]+@[\w.-]+)/),
       householdAddr: grab(t, /戶籍地址\s*[:：]\s*(.+?)\s*通訊地址/),
       mailingAddr: grab(t, /通訊地址\s*[:：]\s*(.+?)\s*聯絡電話/),
