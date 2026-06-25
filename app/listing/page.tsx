@@ -1,10 +1,14 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-const DEPOSIT_MONTH = "2"; // 押金固定 2 個月（公司慣例）
 type Photo = { file: File; url: string };
-
 type House = { ragicId: string; name: string; addr: string; company: string; listed: boolean };
+
+type PortalField = { label: string; value: string; gap?: boolean; note?: string };
+type PortalTab = { tab: string; fields: PortalField[] };
+type PortalPackage = { tabs: PortalTab[]; gaps: string[]; text: string };
+type PortalResult = { success: boolean; error?: string; package?: PortalPackage };
+
 type FillResult = {
   success: boolean;
   error?: string;
@@ -24,20 +28,26 @@ export default function ListingPage() {
   const [searching, setSearching] = useState(false);
   const [house, setHouse] = useState<House | null>(null);
 
+  // 共用輸入
   const [pdf, setPdf] = useState<File | null>(null);
   const [contractStart, setContractStart] = useState("");
   const [contractEnd, setContractEnd] = useState("");
   const [caseNo, setCaseNo] = useState("");
   const [totalFloor, setTotalFloor] = useState("");
+  const [area, setArea] = useState("");
+  const [genderLimit, setGenderLimit] = useState("男女皆可");
+  const [foreigner, setForeigner] = useState("是");
+  const [moveInDate, setMoveInDate] = useState("");
+  const [photos, setPhotos] = useState<Photo[]>([]);
 
+  // ① 官網上架包
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portal, setPortal] = useState<PortalResult | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // ② Ragic 寫入
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<FillResult | null>(null);
-
-  // 文字資料包 + 照片（獨立於 Ragic 流程，供手動到後台刊登/交接用）
-  const [area, setArea] = useState("");
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [pkg, setPkg] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const field = "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500";
   const label = "block text-sm font-medium text-gray-700 mb-1";
@@ -51,34 +61,6 @@ export default function ListingPage() {
       URL.revokeObjectURL(prev[idx].url);
       return prev.filter((_, i) => i !== idx);
     });
-  };
-
-  const summary = useMemo(() => {
-    const L: string[] = [];
-    L.push(`【官網上架資料包】${house?.name || "（未選房源）"}`);
-    L.push("");
-    L.push(`房源：${house?.name || "—"}${house?.addr ? `（${house.addr}）` : ""}`);
-    L.push(`代管約 PDF：${pdf ? pdf.name : "（未上傳）"}`);
-    L.push(`契約期間：${contractStart || "—"} ～ ${contractEnd || "—"}`);
-    L.push(`原案場編號：${caseNo || "—"}`);
-    L.push(`總樓層：${totalFloor || "—"}　空間大小（m²）：${area || "—"}`);
-    L.push(`押金（月）：${DEPOSIT_MONTH}（固定）`);
-    L.push(`照片：${photos.length} 張`);
-    return L.join("\n");
-  }, [house, pdf, contractStart, contractEnd, caseNo, totalFloor, area, photos]);
-
-  const copy = async () => {
-    await navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-  const download = () => {
-    const blob = new Blob([summary], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${house?.name || "上架資料包"}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   };
 
   const search = async () => {
@@ -96,8 +78,53 @@ export default function ListingPage() {
     }
   };
 
-  const canSubmit = house && pdf && contractStart && contractEnd && caseNo && !submitting;
+  const effectiveMoveIn = moveInDate || contractStart;
+  const canPortal = !!(house && pdf) && !portalLoading;
+  const canSubmit = !!(house && pdf && contractStart && contractEnd && caseNo) && !submitting;
 
+  // ① 產生官網上架包
+  const genPortal = async () => {
+    if (!canPortal) return;
+    setPortalLoading(true);
+    setPortal(null);
+    try {
+      const fd = new FormData();
+      fd.set("pdf", pdf!);
+      fd.set("houseName", house!.name);
+      fd.set("houseAddr", house!.addr);
+      fd.set("houseCompany", house!.company);
+      fd.set("totalFloor", totalFloor);
+      fd.set("area", area);
+      fd.set("genderLimit", genderLimit);
+      fd.set("foreigner", foreigner);
+      fd.set("moveInDate", effectiveMoveIn);
+      fd.set("photoCount", String(photos.length));
+      const res = await fetch("/api/listing-portal", { method: "POST", body: fd });
+      setPortal(await res.json());
+    } catch (e) {
+      setPortal({ success: false, error: String(e) });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  const copyPortal = async () => {
+    if (!portal?.package) return;
+    await navigator.clipboard.writeText(portal.package.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  const downloadPortal = () => {
+    if (!portal?.package) return;
+    const blob = new Blob([portal.package.text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${house?.name || "官網上架包"}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // ② 寫入 Ragic
   const submit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
@@ -125,13 +152,13 @@ export default function ListingPage() {
         <a href="/" className="text-xs text-gray-400 hover:text-gray-600">‹ 回工作助手</a>
         <h1 className="text-xl font-bold text-gray-800 mt-2 mb-1">🏢 官網上架</h1>
         <p className="text-sm text-gray-500 mb-6">
-          選定 Ragic 房源、上傳「線上版」代管約 PDF，自動把屋主、房源、收款帳戶資料補填進 Ragic。
+          選定房源、上傳「線上版」代管約 PDF：先產生<b>官網上架欄位包</b>（照填 zuyou.com.tw 七分頁），再把資料<b>回填 Ragic</b>。
         </p>
 
         <div className="flex flex-col gap-5">
-          {/* 1. 選房源 */}
+          {/* 選房源 */}
           <div>
-            <label className={label}>1. 選定房源 *</label>
+            <label className={label}>選定房源 *</label>
             {house ? (
               <div className="flex items-center justify-between border border-green-300 bg-green-50 rounded-lg px-3 py-2 text-sm">
                 <span className="min-w-0">
@@ -165,13 +192,14 @@ export default function ListingPage() {
                     ))}
                   </div>
                 )}
+                <p className="text-xs text-gray-400 mt-1">※ 需從搜尋結果點選才算選定；只打字不算。</p>
               </>
             )}
           </div>
 
-          {/* 2. 上傳線上版 PDF */}
+          {/* 上傳 PDF */}
           <div>
-            <label className={label}>2. 上傳代管約 PDF（線上版）*</label>
+            <label className={label}>上傳代管約 PDF（線上版）*</label>
             <input
               type="file"
               accept="application/pdf,.pdf"
@@ -182,46 +210,156 @@ export default function ListingPage() {
             <p className="text-xs text-amber-600 mt-1">⚠️ 須為電子簽署「線上版」（有文字層）；掃描版無法解析。</p>
           </div>
 
-          {/* 3. 補充欄（線上版抽不到） */}
+          {/* 補充欄 */}
           <hr className="border-gray-100" />
           <p className="text-sm font-semibold text-gray-700">補充資訊（PDF 沒有，需另填）</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>契約起始日 *</label>
+              <label className={label}>契約起始日</label>
               <input type="date" className={field} value={contractStart} onChange={(e) => setContractStart(e.target.value)} />
             </div>
             <div>
-              <label className={label}>契約結束日 *</label>
+              <label className={label}>契約結束日</label>
               <input type="date" className={field} value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} />
+            </div>
+          </div>
+          <p className="-mt-3 text-xs text-gray-400">※ 年份請填<b>西元</b>（民國 115 年＝西元 2026）。回填 Ragic 必填，官網包可先不填。</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label}>原案場編號</label>
+              <input className={field} value={caseNo} onChange={(e) => setCaseNo(e.target.value)} placeholder="例：202604-062-慕夏" />
+            </div>
+            <div>
+              <label className={label}>總樓層</label>
+              <input className={field} inputMode="numeric" value={totalFloor} onChange={(e) => setTotalFloor(e.target.value)} placeholder="15" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>原案場編號 *</label>
-              <input className={field} value={caseNo} onChange={(e) => setCaseNo(e.target.value)} placeholder="例：2026--862-欣時代14" />
+              <label className={label}>空間大小（m²）</label>
+              <input className={field} inputMode="numeric" value={area} onChange={(e) => setArea(e.target.value)} placeholder="30" />
             </div>
             <div>
-              <label className={label}>總樓層</label>
-              <input className={field} inputMode="numeric" value={totalFloor} onChange={(e) => setTotalFloor(e.target.value)} placeholder="30" />
+              <label className={label}>何時可入住</label>
+              <input type="date" className={field} value={effectiveMoveIn} onChange={(e) => setMoveInDate(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={label}>性別限制</label>
+              <select className={field} value={genderLimit} onChange={(e) => setGenderLimit(e.target.value)}>
+                <option>男女皆可</option>
+                <option>限男</option>
+                <option>限女</option>
+              </select>
+            </div>
+            <div>
+              <label className={label}>可接受外國租客</label>
+              <select className={field} value={foreigner} onChange={(e) => setForeigner(e.target.value)}>
+                <option>是</option>
+                <option>否</option>
+              </select>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={submit}
-            disabled={!canSubmit}
-            className="w-full bg-blue-600 text-white text-sm font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 transition"
-          >
-            {submitting ? "寫入 Ragic 中…（請稍候）" : "解析並寫入 Ragic"}
-          </button>
+          {/* 照片 */}
+          <div>
+            <label className={label}>房源照片（官網用）</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => onPhotos(e.target.files)}
+              className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm hover:file:bg-blue-100"
+            />
+            {photos.length > 0 && (
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {photos.map((p, i) => (
+                  <div key={i} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt={p.file.name} className="w-full h-16 object-cover rounded-md border" />
+                    <button type="button" onClick={() => removePhoto(i)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs leading-none opacity-0 group-hover:opacity-100 transition">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* 結果 */}
+      {/* ① 官網上架包 */}
+      <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-lg mx-auto mt-6">
+        <h2 className="text-base font-bold text-gray-800 mb-1">① 上架官網（zuyou.com.tw）</h2>
+        <p className="text-xs text-gray-500 mb-4">產生七分頁逐欄位上架包，照著填官網 <code className="bg-gray-100 px-1 rounded">houses/new</code>；實際填表/上傳照片沿用既有流程。</p>
+        <button
+          type="button"
+          onClick={genPortal}
+          disabled={!canPortal}
+          className="w-full bg-gray-800 text-white text-sm font-semibold py-3 rounded-xl hover:bg-gray-900 disabled:bg-gray-300 transition"
+        >
+          {portalLoading ? "解析中…" : "產生官網上架包"}
+        </button>
+
+        {portal && (
+          <div className="mt-5 border-t border-gray-100 pt-5">
+            {portal.success && portal.package ? (
+              <>
+                <div className="flex gap-2 mb-4">
+                  <button onClick={copyPortal} className="flex-1 bg-gray-800 text-white text-sm py-2 rounded-lg hover:bg-gray-900 transition">{copied ? "已複製 ✓" : "複製整包"}</button>
+                  <button onClick={downloadPortal} className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 transition">下載 .txt</button>
+                </div>
+                {portal.package.gaps.length > 0 && (
+                  <div className="mb-4 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="font-semibold mb-1">⚠️ 待補/待確認（{portal.package.gaps.length}）</p>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {portal.package.gaps.map((g, i) => <li key={i}>{g}</li>)}
+                    </ul>
+                  </div>
+                )}
+                <div className="space-y-4">
+                  {portal.package.tabs.map((t) => (
+                    <div key={t.tab}>
+                      <p className="text-sm font-semibold text-gray-700 mb-1">{t.tab}</p>
+                      <div className="border border-gray-200 rounded-lg divide-y text-sm">
+                        {t.fields.map((f, i) => (
+                          <div key={i} className="px-3 py-2 flex gap-3">
+                            <span className="w-28 shrink-0 text-gray-500">{f.label}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className={f.gap ? "text-amber-600" : "text-gray-800"}>{f.value || "—"}</span>
+                              {f.note && <span className="block text-[11px] text-gray-400">{f.note}</span>}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">❌ {portal.error}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ② 回填 Ragic */}
+      <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-lg mx-auto mt-6">
+        <h2 className="text-base font-bold text-gray-800 mb-1">② 回填 Ragic</h2>
+        <p className="text-xs text-gray-500 mb-4">把屋主、房源、收款帳戶資料補填進 Ragic（housing/70）。需填好契約起迄日與原案場編號。</p>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canSubmit}
+          className="w-full bg-blue-600 text-white text-sm font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:bg-gray-300 transition"
+        >
+          {submitting ? "寫入 Ragic 中…（請稍候）" : "解析並寫入 Ragic"}
+        </button>
+
         {result && (
-          <div className="mt-8 border-t border-gray-100 pt-6">
+          <div className="mt-6 border-t border-gray-100 pt-5">
             {result.success ? (
               <>
-                <h2 className="text-base font-bold text-green-700 mb-3">✅ 已寫入 Ragic</h2>
+                <h3 className="text-base font-bold text-green-700 mb-3">✅ 已寫入 Ragic</h3>
                 <div className="text-sm text-gray-700 space-y-1 mb-3">
                   <p>屋主：<b>{result.owner?.name}</b>（{result.owner?.idNumber}）— {result.owner?.existed ? "沿用既有屋主檔" : "已新建屋主檔"}</p>
                   {result.parsed && (
@@ -245,55 +383,6 @@ export default function ListingPage() {
             ) : (
               <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">❌ {result.error}</p>
             )}
-          </div>
-        )}
-      </div>
-
-      {/* 文字資料包 + 照片（獨立功能：供手動到 Zuyou 後台刊登／交接） */}
-      <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-lg mx-auto mt-6">
-        <h2 className="text-base font-bold text-gray-800 mb-1">📦 官網上架資料包（文字＋照片）</h2>
-        <p className="text-xs text-gray-500 mb-4">與上方 Ragic 寫入獨立；產生文字摘要與照片，供手動到 Zuyou 後台刊登或交接用。</p>
-
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className={label}>房源照片</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => onPhotos(e.target.files)}
-              className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:text-sm hover:file:bg-blue-100"
-            />
-            {photos.length > 0 && (
-              <div className="grid grid-cols-4 gap-2 mt-2">
-                {photos.map((p, i) => (
-                  <div key={i} className="relative group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.url} alt={p.file.name} className="w-full h-16 object-cover rounded-md border" />
-                    <button type="button" onClick={() => removePhoto(i)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs leading-none opacity-0 group-hover:opacity-100 transition">×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="w-1/2">
-            <label className={label}>空間大小（m²）</label>
-            <input className={field} inputMode="numeric" value={area} onChange={(e) => setArea(e.target.value)} placeholder="70" />
-          </div>
-
-          <button type="button" onClick={() => setPkg(true)} className="w-full bg-gray-800 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-900 transition">
-            產生文字資料包
-          </button>
-        </div>
-
-        {pkg && (
-          <div className="mt-5 border-t border-gray-100 pt-5">
-            <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap mb-3">{summary}</pre>
-            <div className="flex gap-2">
-              <button onClick={copy} className="flex-1 bg-gray-800 text-white text-sm py-2 rounded-lg hover:bg-gray-900 transition">{copied ? "已複製 ✓" : "複製摘要"}</button>
-              <button onClick={download} className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded-lg hover:bg-gray-50 transition">下載 .txt</button>
-            </div>
           </div>
         )}
       </div>
