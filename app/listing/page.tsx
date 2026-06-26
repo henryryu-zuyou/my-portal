@@ -192,7 +192,17 @@ export default function ListingPage() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">管理公司（選填）</label>
-                  <input className={field} value={newCompany} onChange={(e) => setNewCompany(e.target.value)} placeholder="例：豈家(桃園)" />
+                  <select className={field} value={newCompany} onChange={(e) => setNewCompany(e.target.value)}>
+                    <option value="">（請選擇）</option>
+                    <option>租寓(大台北)</option>
+                    <option>租寓台中(台中)</option>
+                    <option>豈家(桃園)</option>
+                    <option>租這(台中)</option>
+                    <option>租寓(高雄)</option>
+                    <option>新竹+(新竹加盟)</option>
+                    <option>好好租(台南)</option>
+                    <option>其他業者</option>
+                  </select>
                 </div>
                 <button type="button" onClick={() => setNewMode(false)} className="self-start text-xs text-gray-500 hover:text-gray-700 underline">
                   ← 改用 Ragic 既有房源搜尋
