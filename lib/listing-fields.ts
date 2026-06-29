@@ -152,8 +152,9 @@ export function requiredBlock(
     [HOUSE.ownerId]: p.owner.idNumber,
     [HOUSE.ownerName]: p.owner.name,
     [HOUSE.caseNo]: keep(HOUSE.caseNo, form.caseNo),
-    [HOUSE.contractStart]: keep(HOUSE.contractStart, form.contractStart),
-    [HOUSE.contractEnd]: keep(HOUSE.contractEnd, form.contractEnd),
+    // 契約起迄日以 PDF 為準：form 已是 PDF 委託管理期間（route 端帶入），優先覆蓋既有；form 空才沿用既有
+    [HOUSE.contractStart]: form.contractStart || keep(HOUSE.contractStart, ""),
+    [HOUSE.contractEnd]: form.contractEnd || keep(HOUSE.contractEnd, ""),
     [HOUSE.remitJudge]: "Yes",
     [HOUSE.agent]: keep(HOUSE.agent, ctx.agent),
     [HOUSE.partner]: keep(HOUSE.partner, ctx.agent),
