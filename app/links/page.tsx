@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 type House = { name: string; type: string; area: string; addr: string };
 
 // 前端清單快取 key（B：開頁先畫上次的清單，使用者不用等）
-const CACHE_KEY = "links_houses_v1";
+// v2：清單改為「只含目前有空房的房源」，升版避免老用戶開頁先看到舊的滿租清單
+const CACHE_KEY = "links_houses_v2";
 
 // 房源名稱去掉結尾的「實驗室」
 const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
@@ -92,7 +93,7 @@ export default function LinksPage() {
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-md mx-auto">
         <h1 className="text-xl font-bold text-gray-800 mb-1">🔗 詢問連結產生器</h1>
         <p className="text-sm text-gray-500 mb-4">
-          選擇房源，產生帶標記的專屬詢問連結（資料來自 Ragic 已上架房源）
+          選擇房源，產生帶標記的專屬詢問連結（資料來自 Ragic、目前有空房的房源）
         </p>
 
         {/* 搜尋框 */}
@@ -111,7 +112,7 @@ export default function LinksPage() {
         {!loading && !error && (
           <>
             <p className="text-xs text-gray-400 mb-2">
-              已上架 {houses.length} 筆{query ? `，符合 ${filtered.length} 筆` : ""}
+              目前有空房 {houses.length} 筆{query ? `，符合 ${filtered.length} 筆` : ""}
             </p>
             <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
               {filtered.map(h => (

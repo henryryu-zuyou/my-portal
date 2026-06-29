@@ -6,7 +6,7 @@ const RAGIC_BASE = "https://ap14.ragic.com/zuyou2022";
 const FORM_PATH = "housing/70";
 const PAGE_SIZE = 1000;
 
-// 篩選條件：管理公司 = 豈家(桃園) 且 網站上架狀態 = 已上架
+// 篩選條件：管理公司 = 豈家(桃園) 且 網站上架狀態 = 已上架 且 仍有空房
 // 注意：管理公司字面值帶「半形括號」，必須是 豈家(桃園)，少字會回 0 筆且不報錯。
 const KEEP_COMPANY = "豈家(桃園)";
 // 用全文搜尋只抓「豈家」相關紀錄，避免掃全表 3000+ 筆（單頁約 6 秒）。
@@ -15,6 +15,12 @@ const FTS_TERM = "豈家";
 type House = { name: string; type: string; area: string; addr: string };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// 解析 Ragic 數字（值是字串、可能含千分位逗號）
+const toNum = (v: string) => {
+  const n = parseInt(String(v || "").replace(/,/g, ""), 10);
+  return isNaN(n) ? 0 : n;
+};
 
 // 單頁抓取，含 3 次重試 + 退避（Ragic 對同 key 高頻請求會限流）
 async function fetchPage(key: string, url: string): Promise<Record<string, string>[]> {
@@ -51,6 +57,7 @@ async function fetchAllListed(key: string): Promise<House[]> {
       if (
         (r["網站上架狀態"] || "") === "已上架" &&
         (r["管理公司"] || "") === KEEP_COMPANY &&
+        toNum(r["空房間數總和"]) > 0 && // 只留目前仍有空房的房源（房源層彙總欄，0=滿租）
         name &&
         !seen.has(name)
       ) {
