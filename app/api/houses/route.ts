@@ -12,7 +12,7 @@ const KEEP_COMPANY = "豈家(桃園)";
 // 用全文搜尋只抓「豈家」相關紀錄，避免掃全表 3000+ 筆（單頁約 6 秒）。
 const FTS_TERM = "豈家";
 
-type House = { name: string; type: string; area: string; addr: string };
+type House = { name: string; type: string; area: string; addr: string; vacant: number };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -67,6 +67,7 @@ async function fetchAllListed(key: string): Promise<House[]> {
           type: r["房源型態"] || "",
           area: r["縣市+行政區"] || "",
           addr: r["完整地址"] || "",
+          vacant: toNum(r["空房間數總和"]),
         });
       }
     }
@@ -89,7 +90,7 @@ const getCachedHouses = unstable_cache(
     if (!key) throw new Error("RAGIC_API_KEY 未設定");
     return fetchAllListed(key);
   },
-  ["links-houses-qijia-taoyuan"],
+  ["links-houses-qijia-taoyuan-v2"], // v2：House 新增 vacant 欄，換鍵避免回傳舊結構快取
   { revalidate: 600 } // 10 分鐘
 );
 

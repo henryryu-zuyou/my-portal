@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 
-type House = { name: string; type: string; area: string; addr: string };
+type House = { name: string; type: string; area: string; addr: string; vacant: number };
 
 // 前端清單快取 key（B：開頁先畫上次的清單，使用者不用等）
-// v2：清單改為「只含目前有空房的房源」，升版避免老用戶開頁先看到舊的滿租清單
-const CACHE_KEY = "links_houses_v2";
+// v3：House 多了 vacant（空房間數），升版避免舊快取顯示「剩 undefined 間空房」
+const CACHE_KEY = "links_houses_v3";
 
 // 房源名稱去掉結尾的「實驗室」
 const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
@@ -121,7 +121,12 @@ export default function LinksPage() {
                   className="flex items-center justify-between gap-2 border border-gray-200 rounded-lg px-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">🏠 {h.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-gray-800 truncate">🏠 {h.name}</p>
+                      <span className="shrink-0 text-[11px] leading-none bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">
+                        剩 {h.vacant} 間空房
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-400 truncate">
                       連結帶入：{houseLabel(h)}
                     </p>
