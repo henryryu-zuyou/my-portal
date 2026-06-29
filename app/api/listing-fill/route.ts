@@ -40,8 +40,7 @@ export async function POST(req: NextRequest) {
 
     if (!houseRagicId) return NextResponse.json({ success: false, error: "請先選定房源" }, { status: 400 });
     if (!(pdf instanceof File)) return NextResponse.json({ success: false, error: "請上傳代管約 PDF" }, { status: 400 });
-    if (!form.contractStart || !form.contractEnd) return NextResponse.json({ success: false, error: "請填寫契約起迄日" }, { status: 400 });
-    if (!form.caseNo) return NextResponse.json({ success: false, error: "請填寫原案場編號" }, { status: 400 });
+    // 契約起迄日、原案場編號的驗證移到解析 PDF / 讀既有房源之後（PDF 為準、既有房源沿用 Ragic）
 
     // 2. 解析 PDF（僅線上版）
     const buf = new Uint8Array(await pdf.arrayBuffer());
@@ -57,6 +56,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "PDF 解析不到屋主姓名/身分證，請確認是正確的線上版代管約。" }, { status: 422 });
     }
 
+    // 契約起迄日：以 PDF（委託管理期間）為準，PDF 沒帶到才用表單值
+    if (parsed.contract.startDate) form.contractStart = toSlashDate(parsed.contract.startDate);
+    if (parsed.contract.endDate) form.contractEnd = toSlashDate(parsed.contract.endDate);
+    if (!form.contractStart || !form.contractEnd) {
+      return NextResponse.json({ success: false, error: "契約起迄日：PDF 未帶到（舊版模板）且表單未填，請手動填寫起迄日。" }, { status: 400 });
+    }
+
     // 3. 讀既有房源（取管理公司、既有必填值）
     const existingArr = await ragicGet(`housing/70/${houseRagicId}`, { naming: "EID", subtable: 0 });
     const existing = (existingArr[0] || {}) as Record<string, unknown>;
@@ -64,6 +70,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: `找不到房源 ${houseRagicId}` }, { status: 404 });
     }
     const company = String(existing[COMPANY_FIELD] ?? "");
+
+    // 原案場編號：表單沒填就沿用既有房源的值；都沒有才擋
+    if (!form.caseNo && !String(existing[HOUSE.caseNo] ?? "").trim()) {
+      return NextResponse.json({ success: false, error: "原案場編號：此房源 Ragic 也沒有，請填寫。" }, { status: 400 });
+    }
 
     // 4. 解出業務名 / 管理組別
     const agent = agentOverride || agentNameForEmail(email) || String(existing[HOUSE.agent] ?? "");

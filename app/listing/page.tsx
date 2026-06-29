@@ -7,7 +7,12 @@ type House = { ragicId: string; name: string; addr: string; company: string; lis
 type PortalField = { label: string; value: string; gap?: boolean; note?: string };
 type PortalTab = { tab: string; fields: PortalField[] };
 type PortalPackage = { tabs: PortalTab[]; gaps: string[]; text: string };
-type PortalResult = { success: boolean; error?: string; package?: PortalPackage };
+type PortalResult = {
+  success: boolean;
+  error?: string;
+  package?: PortalPackage;
+  parsed?: { contract?: { startDate: string; endDate: string; reviewDate: string } };
+};
 
 type FillResult = {
   success: boolean;
@@ -91,8 +96,8 @@ export default function ListingPage() {
       ? { ragicId: "", name: newName.trim(), addr: newAddr.trim(), company: newCompany.trim(), listed: false }
       : null);
   const canPortal = !!(effHouse && pdf) && !portalLoading;
-  // ② 回填 Ragic 目前僅支援「已在 Ragic 的房源」（需選定既有房源）
-  const canSubmit = !!(house && pdf && contractStart && contractEnd && caseNo) && !submitting;
+  // ② 回填 Ragic 僅支援既有房源（需選定）；契約起迄日以 PDF 為準、原案場編號既有房源沿用 Ragic，故不再硬性要求
+  const canSubmit = !!(house && pdf) && !submitting;
 
   // ① 產生官網上架包
   const genPortal = async () => {
@@ -112,7 +117,12 @@ export default function ListingPage() {
       fd.set("moveInDate", effectiveMoveIn);
       fd.set("photoCount", String(photos.length));
       const res = await fetch("/api/listing-portal", { method: "POST", body: fd });
-      setPortal(await res.json());
+      const data: PortalResult = await res.json();
+      setPortal(data);
+      // 契約起迄日以 PDF 為準：解析到就自動帶入（可再手動覆寫）
+      const c = data.parsed?.contract;
+      if (data.success && c?.startDate) setContractStart(c.startDate);
+      if (data.success && c?.endDate) setContractEnd(c.endDate);
     } catch (e) {
       setPortal({ success: false, error: String(e) });
     } finally {
@@ -256,7 +266,7 @@ export default function ListingPage() {
 
           {/* 補充欄 */}
           <hr className="border-gray-100" />
-          <p className="text-sm font-semibold text-gray-700">補充資訊（PDF 沒有，需另填）</p>
+          <p className="text-sm font-semibold text-gray-700">補充資訊（PDF／Ragic 沒有才需填）</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>契約起始日</label>
@@ -267,11 +277,11 @@ export default function ListingPage() {
               <input type="date" className={field} value={contractEnd} onChange={(e) => setContractEnd(e.target.value)} />
             </div>
           </div>
-          <p className="-mt-3 text-xs text-gray-400">※ 年份請填<b>西元</b>（民國 115 年＝西元 2026）。回填 Ragic 必填，官網包可先不填。</p>
+          <p className="-mt-3 text-xs text-gray-400">※ 按「產生官網上架包」後會<b>自動帶入 PDF 的委託管理期間（以 PDF 為準）</b>，可手動覆寫；舊版 PDF 沒帶到才需自填（西元年）。</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>原案場編號</label>
-              <input className={field} value={caseNo} onChange={(e) => setCaseNo(e.target.value)} placeholder="例：202604-062-慕夏" />
+              <input className={field} value={caseNo} onChange={(e) => setCaseNo(e.target.value)} placeholder="既有房源免填，沿用 Ragic" />
             </div>
             <div>
               <label className={label}>總樓層</label>
