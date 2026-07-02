@@ -41,6 +41,49 @@ const formatDateTime = (val: string) => {
   return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
 };
 
+// 手機 webview（如 LINE 內建瀏覽器）常沒有網址列，補一個返回／分享連結的工具列
+function PageToolbar() {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "房客詢問表單", url });
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") await copyToClipboard(url);
+      }
+      return;
+    }
+    await copyToClipboard(url);
+  };
+
+  return (
+    <div className="fixed top-0 inset-x-0 z-10 flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur border-b border-gray-200">
+      <button
+        onClick={() => window.history.back()}
+        className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+      >
+        ← 返回
+      </button>
+      <button
+        onClick={handleShare}
+        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+      >
+        {copied ? "已複製連結" : "🔗 分享連結"}
+      </button>
+    </div>
+  );
+}
+
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
@@ -112,7 +155,8 @@ export default function InquiryPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-14 px-4">
+        <PageToolbar />
         <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-md text-center">
           <div className="text-5xl mb-4">✅</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">填寫完成！</h2>
@@ -154,7 +198,8 @@ export default function InquiryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 pt-16 pb-10 px-4">
+      <PageToolbar />
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-md mx-auto">
         <h1 className="text-xl font-bold text-gray-800 mb-1">📋 房客詢問表單</h1>
         <p className="text-sm text-gray-500 mb-4">請填寫以下資訊，讓我們更了解您的需求</p>
