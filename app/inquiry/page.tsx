@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 const initialForm = {
   house: "",
@@ -42,7 +42,8 @@ const formatDateTime = (val: string) => {
 };
 
 // 手機 webview（如 LINE 內建瀏覽器）常沒有網址列，補一個返回／分享連結的工具列
-function PageToolbar() {
+// memo：工具列不吃 props，用 memo 避免每次表單輸入都連帶 re-render
+const PageToolbar = memo(function PageToolbar() {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async (url: string) => {
@@ -67,7 +68,7 @@ function PageToolbar() {
   };
 
   return (
-    <div className="fixed top-0 inset-x-0 z-10 flex items-center justify-between px-4 py-2 bg-white/90 backdrop-blur border-b border-gray-200">
+    <div className="fixed top-0 inset-x-0 z-10 flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm">
       <button
         onClick={() => window.history.back()}
         className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
@@ -82,7 +83,7 @@ function PageToolbar() {
       </button>
     </div>
   );
-}
+});
 
 export default function InquiryPage() {
   const [form, setForm] = useState(initialForm);
