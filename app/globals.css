@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* 本站為淺色設計：固定淺色，避免手機深色模式把未指定顏色的文字、
+     以及原生下拉/日期控件變成近白色而看不清 */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -12,17 +15,25 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 註：原本這裡有 @media (prefers-color-scheme: dark) 把 --foreground 改成近白色，
+   會讓沒指定 text 顏色的選項文字（一年/有無/是否…）在白卡片上幾乎看不見，
+   全站又沒有深色版面，故移除。 */
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 消除 iOS 對可點擊元素的雙擊縮放判定延遲（~300ms），讓每次點選即時反應 */
+button,
+label,
+input,
+select,
+textarea,
+a {
+  touch-action: manipulation;
 }
 
 /* 加深輸入框提示文字，避免在手機瀏覽器上看起來偏淡 */
