@@ -4,6 +4,7 @@ import { useState, useEffect, memo } from "react";
 const initialForm = {
   house: "",
   name: "",
+  phone: "",
   moveInDate: "",
   leaseDuration: "",
   adults: "",
@@ -19,6 +20,7 @@ const initialForm = {
   viewingSlot2: "",
   viewingSlot3: "",
   note: "",
+  source: "",
 };
 
 // 看房時間下拉選項：08:00 ~ 23:00，每 30 分鐘一個
@@ -164,6 +166,7 @@ export default function InquiryPage() {
           <p className="text-gray-500 text-sm mb-6">感謝 {form.name} 填寫資料，我們會盡快與您聯繫。</p>
           <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
             {form.house && <p>🏠 詢問物件：{form.house}</p>}
+            <p>📞 電話號碼：{form.phone}</p>
             <p>📅 預計入住：{form.moveInDate}</p>
             <p>⏳ 租期：{form.leaseDuration}</p>
             <p>👥 大人人數：{form.adults} 人</p>
@@ -178,6 +181,7 @@ export default function InquiryPage() {
             <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
             <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
             {form.note && <p>📝 其他說明：{form.note}</p>}
+            <p>📣 如何得知此房源：{form.source}</p>
           </div>
           <button
             onClick={() => {
@@ -219,6 +223,16 @@ export default function InquiryPage() {
             <input
               name="name" required value={form.name} onChange={handleChange}
               placeholder="例：王先生 / 陳小姐"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* 電話號碼 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">電話號碼 *</label>
+            <input
+              type="tel" name="phone" required value={form.phone} onChange={handleChange}
+              placeholder="例：0912345678"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -418,6 +432,19 @@ export default function InquiryPage() {
             />
           </div>
 
+          {/* 如何得知此房源 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">12. 如何得知此房源？ *</label>
+            <div className="flex flex-col gap-2">
+              {["591", "租寓官網", "其他"].map(v => (
+                <label key={v} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="source" value={v} checked={form.source === v} onChange={handleChange} required />
+                  {v}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition mt-2"
@@ -436,6 +463,7 @@ export default function InquiryPage() {
             <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
               {form.house && <p>🏠 詢問物件：{form.house}</p>}
               <p>🙋 稱呼：{form.name}</p>
+              <p>📞 電話號碼：{form.phone}</p>
               <p>📅 預計入住：{form.moveInDate}</p>
               <p>⏳ 租期：{form.leaseDuration}</p>
               <p>👥 大人人數：{form.adults} 人</p>
@@ -450,6 +478,7 @@ export default function InquiryPage() {
               <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
               <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
               {form.note && <p>📝 其他說明：{form.note}</p>}
+              <p>📣 如何得知此房源：{form.source}</p>
             </div>
             <div className="flex gap-3 mt-5">
               <button

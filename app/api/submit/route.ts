@@ -15,6 +15,7 @@ function buildChatMessage(d: Record<string, unknown>) {
     "📋 *有新的房客詢問！*",
     d.house ? `🏠 詢問物件：*${s(d.house)}*` : null,
     `🙋 稱呼：${s(d.name)}`,
+    `📞 電話號碼：${s(d.phone)}`,
     `📅 預計入住：${s(d.moveInDate)}`,
     `⏳ 租期：${s(d.leaseDuration)}`,
     `👥 人數：大人 ${s(d.adults)} / 小孩 ${s(d.children)}`,
@@ -26,6 +27,7 @@ function buildChatMessage(d: Record<string, unknown>) {
     `🚗 汽車位：${s(d.needParking)}`,
     `🗓 看房時段：${s(d.viewingSlot1)}｜${s(d.viewingSlot2)}｜${s(d.viewingSlot3)}`,
     d.note ? `📝 其他說明：${s(d.note)}` : null,
+    `📣 如何得知此房源：${s(d.source)}`,
   ]
     .filter(Boolean)
     .join("\n");
