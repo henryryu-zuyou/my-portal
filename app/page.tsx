@@ -28,6 +28,12 @@ export default function Home() {
       title: "詢問連結產生器",
       desc: "選擇房源、產生專屬詢問連結",
     },
+    {
+      href: "/rent-tax",
+      icon: "🧮",
+      title: "房東租賃所得稅試算",
+      desc: "比較四種身分的年度應繳稅額",
+    },
     // 暫時隱藏，功能與 /scrm 頁面程式碼保留，要恢復把這段取消註解即可
     // {
     //   href: "/scrm",

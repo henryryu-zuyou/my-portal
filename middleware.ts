@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 
 // 需要登入的路由：首頁、連結產生器、官網上架、房源 API
-// （/inquiry、/api/submit 維持公開讓房客使用）
+// （/inquiry、/api/submit、/rent-tax 維持公開：房客/房東可直接使用）
 export const config = {
   matcher: ["/", "/links/:path*", "/listing/:path*", "/api/houses/:path*", "/api/listing-fill/:path*"],
 };
