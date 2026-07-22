@@ -56,7 +56,7 @@ const RATE_PRESETS = [5, 12, 20, 30, 40];
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 
 export default function RentTaxPage() {
-  const [rent, setRent] = useState(30000); // 每月收租金額
+  const [rent, setRent] = useState<number | "">(""); // 每月收租金額（預設空白）
   const [rate, setRate] = useState(5); // 綜合所得稅率(%)
 
   const rows = useMemo(() => {
@@ -80,9 +80,6 @@ export default function RentTaxPage() {
     const minTax = Math.min(...list.map((x) => x.tax));
     return { list, minTax, annual };
   }, [rent, rate]);
-
-  const best = rows.list.filter((x) => x.tax === rows.minTax);
-  const saveVsSelf = rows.list[0].tax - rows.minTax;
 
   const field =
     "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500";
@@ -112,8 +109,11 @@ export default function RentTaxPage() {
                 inputMode="numeric"
                 min={0}
                 step={1000}
+                placeholder="例：30000"
                 value={rent}
-                onChange={(e) => setRent(Number(e.target.value))}
+                onChange={(e) =>
+                  setRent(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 className={field + " pl-11 text-right font-semibold tabular-nums"}
               />
             </div>
@@ -126,7 +126,7 @@ export default function RentTaxPage() {
               </span>
               <input
                 readOnly
-                value={rows.annual.toLocaleString("en-US")}
+                value={rent === "" ? "" : rows.annual.toLocaleString("en-US")}
                 className={
                   "w-full border border-dashed border-gray-300 bg-gray-50 rounded-lg px-3 py-2 pl-11 text-sm text-right font-semibold text-gray-600 tabular-nums"
                 }
@@ -176,25 +176,6 @@ export default function RentTaxPage() {
           </p>
         </div>
 
-        {/* ── 最省稅 ───────────────────────── */}
-        {rent > 0 && (
-          <div className="mt-6 flex items-center gap-3 flex-wrap rounded-xl border border-green-300 bg-green-50 px-4 py-3">
-            <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-green-600 text-white shrink-0">
-              最省稅方案
-            </span>
-            <span className="text-sm text-green-800 leading-relaxed">
-              選擇 <b>{best.map((b) => b.name).join("、")}</b> 應繳稅額最低，全年約{" "}
-              <b className="text-base tabular-nums">{money(rows.minTax)}</b>
-              {saveVsSelf > 0.5 && (
-                <>
-                  ，較房東自租每年可少繳{" "}
-                  <b className="tabular-nums">{money(saveVsSelf)}</b>。
-                </>
-              )}
-            </span>
-          </div>
-        )}
-
         {/* ── 試算表 ───────────────────────── */}
         <div className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[620px] border-collapse">
@@ -210,7 +191,7 @@ export default function RentTaxPage() {
             </thead>
             <tbody>
               {rows.list.map((r) => {
-                const win = r.tax === rows.minTax && rent > 0;
+                const win = r.tax === rows.minTax && Number(rent) > 0;
                 return (
                   <tr
                     key={r.idx}
