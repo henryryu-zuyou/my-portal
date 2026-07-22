@@ -77,8 +77,7 @@ export default function RentTaxPage() {
         net: annual - tax,
       };
     });
-    const minTax = Math.min(...list.map((x) => x.tax));
-    return { list, minTax, annual };
+    return { list, annual };
   }, [rent, rate]);
 
   const field =
@@ -190,50 +189,34 @@ export default function RentTaxPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.list.map((r) => {
-                const win = r.tax === rows.minTax && Number(rent) > 0;
-                return (
-                  <tr
-                    key={r.idx}
-                    className={"border-b border-gray-100 " + (win ? "bg-green-50" : "")}
-                  >
-                    <td className="py-3.5 px-3 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-green-100 text-green-700 text-xs font-bold shrink-0">
-                          {r.idx}
-                        </span>
-                        <span className="font-semibold text-gray-800 text-sm">{r.name}</span>
-                        {win && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-600 text-white">
-                            最省
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-gray-400 mt-0.5 ml-7">{r.note}</div>
-                    </td>
-                    <td className="py-3.5 px-3 text-right text-sm text-gray-500 tabular-nums whitespace-nowrap">
-                      {money(r.free)}
-                    </td>
-                    <td className="py-3.5 px-3 text-right text-sm text-gray-700 tabular-nums whitespace-nowrap">
-                      {money(r.deduct)}
-                    </td>
-                    <td className="py-3.5 px-3 text-right text-sm text-gray-700 tabular-nums whitespace-nowrap">
-                      {money(r.incl)}
-                    </td>
-                    <td
-                      className={
-                        "py-3.5 px-3 text-right font-bold tabular-nums whitespace-nowrap " +
-                        (win ? "text-green-700" : "text-gray-900")
-                      }
-                    >
-                      {money(r.tax)}
-                    </td>
-                    <td className="py-3.5 px-3 text-right text-sm text-gray-500 tabular-nums whitespace-nowrap">
-                      {money(r.net)}
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows.list.map((r) => (
+                <tr key={r.idx} className="border-b border-gray-100">
+                  <td className="py-3.5 px-3 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-gray-100 text-gray-500 text-xs font-bold shrink-0">
+                        {r.idx}
+                      </span>
+                      <span className="font-semibold text-gray-800 text-sm">{r.name}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 mt-0.5 ml-7">{r.note}</div>
+                  </td>
+                  <td className="py-3.5 px-3 text-right text-sm text-gray-500 tabular-nums whitespace-nowrap">
+                    {money(r.free)}
+                  </td>
+                  <td className="py-3.5 px-3 text-right text-sm text-gray-700 tabular-nums whitespace-nowrap">
+                    {money(r.deduct)}
+                  </td>
+                  <td className="py-3.5 px-3 text-right text-sm text-gray-700 tabular-nums whitespace-nowrap">
+                    {money(r.incl)}
+                  </td>
+                  <td className="py-3.5 px-3 text-right font-bold text-gray-900 tabular-nums whitespace-nowrap">
+                    {money(r.tax)}
+                  </td>
+                  <td className="py-3.5 px-3 text-right text-sm text-gray-500 tabular-nums whitespace-nowrap">
+                    {money(r.net)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
