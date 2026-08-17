@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-Hant">
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一般代管 vs 社宅代管｜桃園房東該選哪一種</title>
+<meta name="description" content="服務費、租金、房客、合約、補助逐項比較，並依您的房子條件給出建議。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#E9ECE3; --card:#F7F8F3; --ink:#171C18; --muted:#626B5C;
+  --rule:#C2C9B8; --rule-soft:#DCE1D4; --seal:#B3322B; --mark:#DCE85E;
+  --serif:"Noto Serif TC",serif; --sans:"Noto Sans TC",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","Noto Sans TC",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:radial-gradient(circle at 1px 1px,rgba(23,28,24,.13) 1px,transparent 0);background-size:4px 4px}
+.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 88px}
+.perf{height:22px;margin:0 -20px;
+  background:radial-gradient(circle at 6px 11px,var(--paper) 3.5px,transparent 4px) 0 0/12px 22px,
+  linear-gradient(var(--rule),var(--rule)) 0 11px/100% 1px no-repeat}
+
+header{padding:34px 0 26px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:18px}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(30px,7vw,54px);line-height:1.14;margin:0 0 14px;letter-spacing:-.01em}
+h1 .hl{background:linear-gradient(transparent 62%,var(--mark) 62%,var(--mark) 94%,transparent 94%);padding:0 .06em}
+.lede{max-width:54ch;color:var(--muted);margin:0;font-size:16.5px}
+
+section{padding:38px 0;border-bottom:1px solid var(--rule-soft)}
+section:last-of-type{border-bottom:0}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.sec-num{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--muted);
+  border:1px solid var(--rule);border-radius:2px;padding:2px 7px;white-space:nowrap}
+h2{font-family:var(--serif);font-weight:700;font-size:22px;margin:0;letter-spacing:.01em}
+.sec-sub{color:var(--muted);font-size:14.5px;margin:0 0 22px}
+
+/* ---- 問答 ---- */
+.q{padding:18px 0;border-bottom:1px dotted var(--rule)}
+.q:last-of-type{border-bottom:0}
+.q > p{margin:0 0 10px;font-weight:500;font-size:15.5px}
+.q > p .n{font-family:var(--mono);font-size:12px;color:var(--muted);margin-right:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips input{position:absolute;opacity:0;width:0;height:0}
+.chips label{
+  display:inline-block;cursor:pointer;background:var(--card);border:1px solid var(--rule);
+  border-radius:2px;padding:7px 13px;font-size:14px;line-height:1.5;transition:all .12s;
+}
+.chips label:hover{border-color:var(--muted)}
+.chips input:checked + label{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chips input:focus-visible + label{outline:2px solid var(--seal);outline-offset:2px}
+
+/* ---- 建議 ---- */
+.verdict{
+  position:relative;background:var(--card);border:1px solid var(--ink);border-radius:2px;
+  box-shadow:4px 4px 0 var(--ink);padding:24px 20px 20px;margin-top:26px;
+}
+.verdict .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.verdict h3{font-family:var(--serif);font-weight:900;font-size:clamp(24px,5.6vw,34px);margin:4px 0 0;padding-right:64px;letter-spacing:-.01em}
+.verdict .why{margin:16px 0 0;padding:0;list-style:none;border-top:1px solid var(--rule-soft)}
+.verdict .why li{padding:9px 0 9px 22px;border-bottom:1px dotted var(--rule-soft);font-size:14.5px;position:relative}
+.verdict .why li::before{content:"→";position:absolute;left:0;color:var(--seal);font-family:var(--mono)}
+.verdict .note{margin:12px 0 0;font-size:13.5px;color:var(--ink);
+  background:rgba(220,232,94,.3);border-radius:2px;padding:9px 11px}
+.verdict .alt{margin:14px 0 0;font-size:13.5px;color:var(--muted)}
+.seal{
+  position:absolute;top:16px;right:16px;width:58px;height:58px;border-radius:50%;
+  border:2.5px solid var(--seal);color:var(--seal);display:grid;place-items:center;
+  transform:rotate(-11deg);font-family:var(--serif);font-weight:900;font-size:17px;
+  line-height:1.1;letter-spacing:.05em;text-align:center;opacity:.9;
+  box-shadow:inset 0 0 0 1.5px var(--card),inset 0 0 0 3px var(--seal);
+  animation:stamp .34s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes stamp{from{transform:rotate(-24deg) scale(1.8);opacity:0}to{transform:rotate(-11deg) scale(1);opacity:.9}}
+
+/* ---- 表格 ---- */
+.scroll{overflow-x:auto;margin:0 -20px;padding:0 20px}
+.tbl{width:100%;border-collapse:collapse;font-size:14.5px;min-width:600px}
+.tbl th,.tbl td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+.tbl thead th{font-family:var(--serif);font-size:16px;font-weight:700;border-bottom:1.5px solid var(--ink);white-space:nowrap}
+.tbl thead th:first-child{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:600}
+.tbl tbody th{font-weight:500;color:var(--muted);white-space:nowrap;font-size:13.5px}
+.tbl tbody tr:hover td{background:rgba(220,232,94,.16)}
+.tbl .grp th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink);background:var(--rule-soft);padding:6px 14px}
+
+.callout{background:var(--card);border-left:3px solid var(--seal);padding:14px 16px;margin:22px 0 0;font-size:14.5px}
+.callout b{font-weight:700}
+
+details{border-top:1px solid var(--rule-soft);padding:14px 0}
+details:last-of-type{border-bottom:1px solid var(--rule-soft)}
+summary{cursor:pointer;font-weight:500;font-size:15px}
+summary:focus-visible{outline:2px solid var(--seal);outline-offset:3px}
+details p{font-size:14px;color:var(--muted);margin:10px 0 0}
+
+footer{padding:30px 0 0;border-top:2px solid var(--ink);font-size:12.5px;color:var(--muted)}
+footer a{color:var(--ink);text-underline-offset:2px}
+.stamp-date{font-family:var(--mono);letter-spacing:.06em;font-size:11.5px}
+
+@media (prefers-reduced-motion:reduce){.seal{animation:none}*{transition:none!important}}
+@media (max-width:520px){.verdict h3{padding-right:0}.seal{position:static;margin:12px 0 0}}
+</style>
+
+<div class="wrap">
+<div class="perf"></div>
+
+<header>
+  <div class="eyebrow"><span>桃園市</span><span>·</span><span>房東指南</span><span>·</span><span>115 年適用</span></div>
+  <h1>都是我們在管，<br><span class="hl">差別在這五件事</span>。</h1>
+  <p class="lede">一般代管和社會住宅代管，做的事情幾乎一樣：招租、簽約、收租、修繕、處理糾紛。真正的差別在服務費誰付、租金誰定、房客從哪來、合約綁多久、以及能省多少稅。</p>
+</header>
+
+<section>
+  <div class="sec-head"><span class="sec-num">先問</span><h2>您的房子適合哪一種</h2></div>
+  <p class="sec-sub">五個問題，約 30 秒。結果僅供初步參考，實際仍需看屋評估。</p>
+
+  <div class="q">
+    <p><span class="n">01</span>這間房子的市場行情月租金大約是</p>
+    <div class="chips" data-k="rent">
+      <input type="radio" name="rent" id="r1" value="low" checked><label for="r1">1.5 萬以下</label>
+      <input type="radio" name="rent" id="r2" value="mid"><label for="r2">1.5 – 2.5 萬</label>
+      <input type="radio" name="rent" id="r3" value="high"><label for="r3">2.5 萬以上</label>
+    </div>
+  </div>
+
+  <div class="q">
+    <p><span class="n">02</span>過去這間房子好不好租</p>
+    <div class="chips" data-k="fill">
+      <input type="radio" name="fill" id="f1" value="fast" checked><label for="f1">很快就租掉</label>
+      <input type="radio" name="fill" id="f2" value="mid"><label for="f2">普通，找一陣子</label>
+      <input type="radio" name="fill" id="f3" value="slow"><label for="f3">常常空著</label>
+      <input type="radio" name="fill" id="f4" value="never"><label for="f4">從未出租過</label>
+    </div>
+  </div>
+
+  <div class="q">
+    <p><span class="n">03</span>未來三年內，有沒有可能賣掉或收回自用</p>
+    <div class="chips" data-k="exit">
+      <input type="radio" name="exit" id="e1" value="no" checked><label for="e1">不會，就是長期收租</label>
+      <input type="radio" name="exit" id="e2" value="maybe"><label for="e2">說不準</label>
+      <input type="radio" name="exit" id="e3" value="yes"><label for="e3">很可能會</label>
+    </div>
+  </div>
+
+  <div class="q">
+    <p><span class="n">04</span>這間房子的租金收入，過去有申報綜合所得稅嗎</p>
+    <div class="chips" data-k="tax">
+      <input type="radio" name="tax" id="t1" value="yes" checked><label for="t1">有申報</label>
+      <input type="radio" name="tax" id="t2" value="no"><label for="t2">沒有</label>
+      <input type="radio" name="tax" id="t3" value="unsure"><label for="t3">不確定</label>
+    </div>
+  </div>
+
+  <div class="q">
+    <p><span class="n">05</span>目前的屋況</p>
+    <div class="chips" data-k="cond">
+      <input type="radio" name="cond" id="c1" value="ok" checked><label for="c1">良好，可直接出租</label>
+      <input type="radio" name="cond" id="c2" value="fix"><label for="c2">需要一些整修</label>
+      <input type="radio" name="cond" id="c3" value="illegal"><label for="c3">有加蓋或違規隔間</label>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict" role="status" aria-live="polite"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">對照</span><h2>逐項比一比</h2></div>
+  <p class="sec-sub">以「代管」方案為準。兩者都另有「包租」方案，由業者當二房東、承擔空屋與欠租。</p>
+  <div class="scroll">
+  <table class="tbl">
+    <thead><tr><th>項目</th><th>一般代管</th><th>社宅代管</th></tr></thead>
+    <tbody>
+      <tr class="grp"><th colspan="3">錢的部分</th></tr>
+      <tr><th>服務費</th><td>由房東支付，行情約月租 10% 上下</td><td>政府補助，房東免付</td></tr>
+      <tr><th>租金水準</th><td>依市場行情，房東決定</td><td>依社宅分級租金標準訂定</td></tr>
+      <tr><th>房屋稅</th><td>1.5%，不限持有戶數；須租期一年以上，並申報租金所得達租金標準</td><td>1.2%，不限持有戶數</td></tr>
+      <tr><th>地價稅</th><td>無專屬減徵，按一般用地稅率課徵</td><td>減徵 80%</td></tr>
+      <tr><th>綜合所得稅</th><td>每月 6,000 元以下免稅；6,001 – 2 萬元部分扣除 53%，超過 2 萬元部分扣除 43%</td><td>每月 15,000 元以下免稅；超過部分扣除 60%</td></tr>
+      <tr><th>修繕補助</th><td>無</td><td>每年最高 1 萬元，最長 3 年</td></tr>
+      <tr><th>其他補助</th><td>無</td><td>公證費最高 3,000 元；包租另有居家安全險最高 3,500 元</td></tr>
+
+      <tr class="grp"><th colspan="3">房客與出租</th></tr>
+      <tr><th>房客來源</th><td>一般租屋市場</td><td>須符合計畫資格的房客</td></tr>
+      <tr><th>找到房客的速度</th><td>依市場需求，通常較快</td><td>須審核媒合，一般多花數週</td></tr>
+      <tr><th>挑選房客</th><td>業者初篩，房東決定</td><td>業者媒合，房東可看件，候選範圍較窄</td></tr>
+
+      <tr class="grp"><th colspan="3">條件與風險</th></tr>
+      <tr><th>屋況門檻</th><td>無特別限制</td><td>須通過檢查，不符標準要先修繕</td></tr>
+      <tr><th>合約長度</th><td>多為三年，可協議終止</td><td>依計畫規定；提前終止須退還已領補助</td></tr>
+      <tr><th>空屋期間</th><td>由房東承擔，空窗長短取決於市場需求</td><td>由房東承擔，媒合期通常較長</td></tr>
+      <tr><th>房客欠租</th><td>由房東承擔，業者協助催繳</td><td>由房東承擔，業者協助催繳</td></tr>
+      <tr><th>日常管理</th><td>業者處理，範圍可加購</td><td>業者處理，依計畫規定的服務內容</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout">
+    <b>代管不等於保證收租。</b>兩種方案的代管，租約都是房東與房客直接簽，空屋和欠租仍由房東承擔，業者負責的是招租、管理與催繳。如果您希望「不管有沒有房客，每個月都固定入帳」，要選的是包租方案。
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">常問</span><h2>房東最常問的幾件事</h2></div>
+
+  <details>
+    <summary>社宅免服務費，服務會不會打折？</summary>
+    <p>服務費由政府支付給業者，不是省略掉。服務內容與品質有計畫規範與主管機關查核，招租、簽約、收租、修繕協調、糾紛處理都在範圍內。差別在於超出計畫範圍的加值服務（例如家具配置、深度清潔）需另行約定。</p>
+  </details>
+  <details>
+    <summary>社宅的租金怎麼訂？約期內可以調漲嗎？</summary>
+    <p>依社會住宅分級租金標準計算，會參考物件條件與房客的所得級距，因此同一間房子面對不同房客也可能不同，需要看屋後才能報價。約期內原則上不隨市場行情調整，等於您先確定了未來幾年的租金水準——市場走跌時是保障，走升時則是機會成本。</p>
+    <p>要判斷划不划算，可以用一個簡單的方式估：省下的服務費，加上房屋稅、地價稅、綜所稅的減免與修繕補助，是否補得上租金差額。租金愈低的物件，通常補得愈滿。</p>
+  </details>
+  <details>
+    <summary>過去沒有申報租金所得，加入社宅會被追查嗎？</summary>
+    <p>依租賃住宅市場發展及管理條例規定，加入計畫所簽訂的契約僅供租稅減免使用，不得作為查核該房東租賃所得的依據。若您有這方面的顧慮，建議在做決定前先諮詢，兩種方案在這一點上的處理方式並不相同。</p>
+  </details>
+  <details>
+    <summary>三年約綁住了，中途想賣房子怎麼辦？</summary>
+    <p>兩種方案都是三年為主，差別在提前終止的代價。一般代管可協議終止；社宅方案在約期內收回自用或出售會受限，且已領取的修繕補助需按比例退還。若未來三年有處分打算，一般代管的退出成本較低。</p>
+  </details>
+  <details>
+    <summary>有加蓋或隔間的房子可以加入社宅嗎？</summary>
+    <p>須先通過屋況檢查，不符合建築與消防規定的部分要處理完成才能收件。若整修成本高，一般代管通常是比較實際的選擇。</p>
+  </details>
+</section>
+
+<footer>
+  <p>本頁為初步參考資訊，實際稅率、補助金額與計畫條件以主管機關公告為準，個別物件仍需看屋評估後報價。桃園市目前執行社會住宅包租代管第 5 期計畫（115 年 1 月 7 日起）。</p>
+  <p>資料來源：桃園市政府地方稅務局<a href="https://tytax.tycg.gov.tw/cl.aspx?n=26977" target="_blank" rel="noopener">出租房屋節稅專區</a>、桃園市政府住宅發展及都市更新處<a href="https://ohd.tycg.gov.tw/cp.aspx?n=8624" target="_blank" rel="noopener">社會住宅包租代管</a>、租賃住宅市場發展及管理條例第 17 條。</p>
+  <p class="stamp-date">資料整理日期 2026-08-18</p>
+</footer>
+</div>
+
+<script>
+(function(){
+  var W={
+    rent:{low:{s:1,r:"租金 1.5 萬以下，每月 1.5 萬元的免稅額幾乎全額用得到，稅務優惠最有感"},
+          mid:{s:0,r:""},
+          high:{s:-1,r:"租金 2.5 萬以上，市價收租的價值通常高過社宅的租金折讓"}},
+    fill:{fast:{s:-2,r:"這間房子本來就好租，空屋風險低，市價出租的效益更高"},
+          mid:{s:0,r:""},
+          slow:{s:2,r:"這間房子常常空著，穩定媒合與免服務費能實際減少空轉損失"},
+          never:{s:0,r:"這間房子還沒出租過，沒有實際紀錄可以判斷市場需求，建議先請業者估行情。空屋在桃園適用非自住住家用稅率，房屋稅 3.2%～4.8%，兩種方案都能降到 1.5% 以下"}},
+    exit:{no:{s:1,r:"長期收租、沒有處分打算，綁約對您幾乎沒有成本"},
+          maybe:{s:-1,r:"未來不確定是否處分，一般代管可協議終止，退出成本較低"},
+          yes:{s:-3,r:"三年內可能賣屋或收回自用，社宅提前終止會受限，已領補助也要退還"}},
+    tax:{yes:{s:0,r:""},
+         no:{s:2,r:"過去未申報租金所得，社宅契約依法不得作為查核租賃所得的依據"},
+         unsure:{s:1,r:"申報狀況不確定，建議先諮詢再決定，社宅在這一點上的規定較有保障"}},
+    cond:{ok:{s:0,r:""},
+          fix:{s:1,r:"需要整修，社宅每年最高 1 萬元的修繕補助可以分攤成本"},
+          illegal:{s:-3,r:"有加蓋或違規隔間，須先處理完成才能通過社宅檢查，短期內不易加入"}}
+  };
+  var keys=["rent","fill","exit","tax","cond"];
+  var last=null;
+
+  function render(){
+    var score=0, pro=[], con=[], notes=[];
+    keys.forEach(function(k){
+      var v=document.querySelector('input[name="'+k+'"]:checked').value;
+      var w=W[k][v];
+      if(!w) return;
+      score+=w.s;
+      if(!w.r) return;
+      if(w.s>0) pro.push({s:w.s,r:w.r});
+      else if(w.s<0) con.push({s:-w.s,r:w.r});
+      else notes.push(w.r);
+    });
+
+    var side, title, sealTxt, alt, reasons;
+    if(score>=2){
+      side="soc"; title="建議優先評估社宅代管"; sealTxt="社宅";
+      reasons=pro; alt="若之後屋況或出租計畫改變，一般代管仍可隨時切換。";
+    }else if(score<=-2){
+      side="gen"; title="建議優先評估一般代管"; sealTxt="一般";
+      reasons=con; alt="若日後空置變長，或不再考慮出售，社宅代管會重新變得划算。";
+    }else{
+      side="both"; title="兩種都可行，看您重視什麼"; sealTxt="兩者<br>皆可";
+      reasons=pro.concat(con);
+      alt="想要租金與彈性，選一般代管；想要免服務費與稅務優惠，選社宅代管。";
+    }
+
+    reasons.sort(function(a,b){return b.s-a.s});
+    var li=reasons.slice(0,3).map(function(o){return "<li>"+o.r+"</li>"}).join("");
+    if(!li) li="<li>各項條件都很平均，兩種方案的差距不大。</li>";
+
+    var fresh = side!==last;
+    document.getElementById("verdict").innerHTML=
+      '<div class="seal"'+(fresh?'':' style="animation:none"')+'>'+sealTxt+'</div>'
+      +'<div class="lbl">初步建議</div><h3>'+title+'</h3>'
+      +'<ul class="why">'+li+'</ul>'
+      +notes.map(function(n){return '<p class="note">另外：'+n+'</p>'}).join("")
+      +'<p class="note">租金折數是影響結論最大的變數，實際折數需看屋評估後才能確定。上面的建議只用租金級距粗估，若折數與預期差距大，結論可能翻轉。</p>'
+      +'<p class="alt">'+alt+'</p>';
+    last=side;
+  }
+
+  document.querySelectorAll('.chips input').forEach(function(el){
+    el.addEventListener("change",render);
+  });
+  render();
+})();
+</script>
+</html>

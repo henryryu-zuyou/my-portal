@@ -9,7 +9,13 @@ export default function Home() {
     router.replace("/login");
   };
 
-  const options = [
+  const options: {
+    href: string;
+    icon: string;
+    title: string;
+    desc: string;
+    external?: boolean;
+  }[] = [
     {
       href: "/listing",
       icon: "🏢",
@@ -34,6 +40,13 @@ export default function Home() {
       title: "房東租賃所得稅試算",
       desc: "比較四種身分的年度應繳稅額",
     },
+    {
+      href: "/daiguan",
+      icon: "⚖️",
+      title: "一般代管 vs 社宅代管",
+      desc: "逐項比較，依房子條件給建議",
+      external: true, // public/ 靜態頁，要整頁導向而非 client 路由
+    },
     // 暫時隱藏，功能與 /scrm 頁面程式碼保留，要恢復把這段取消註解即可
     // {
     //   href: "/scrm",
@@ -54,7 +67,9 @@ export default function Home() {
           {options.map(o => (
             <button
               key={o.href}
-              onClick={() => router.push(o.href)}
+              onClick={() =>
+                o.external ? window.open(o.href, "_blank") : router.push(o.href)
+              }
               className="w-full text-left border border-gray-200 rounded-xl p-4 hover:border-blue-500 hover:shadow-sm transition flex items-center gap-4"
             >
               <span className="text-2xl shrink-0">{o.icon}</span>
