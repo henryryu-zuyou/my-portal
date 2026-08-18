@@ -47,6 +47,13 @@ export default function Home() {
       desc: "逐項比較，依房子條件給建議",
       external: true, // public/ 靜態頁，要整頁導向而非 client 路由
     },
+    {
+      href: "/daiguan/guide",
+      icon: "🧮",
+      title: "代管建議計分表（內部）",
+      desc: "/daiguan 五題問卷的計分方式與談案注意事項",
+      external: true, // route handler 回傳 HTML，整頁開啟
+    },
     // 暫時隱藏，功能與 /scrm 頁面程式碼保留，要恢復把這段取消註解即可
     // {
     //   href: "/scrm",

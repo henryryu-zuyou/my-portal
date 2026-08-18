@@ -53,6 +53,8 @@ function b64urlToStr(b64: string): string {
 
 async function hmac(data: string): Promise<string> {
   const secret = process.env.SESSION_SECRET || "";
+  // fail-closed：沒設密鑰就不簽/不驗，避免用空字串當金鑰讓任何人偽造 session
+  if (!secret) throw new Error("SESSION_SECRET 未設定");
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),

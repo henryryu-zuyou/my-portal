@@ -237,9 +237,20 @@ footer a{color:var(--ink);text-underline-offset:2px}
   <p>本頁為初步參考資訊，實際稅率、補助金額與計畫條件以主管機關公告為準，個別物件仍需看屋評估後報價。桃園市目前執行社會住宅包租代管第 5 期計畫（115 年 1 月 7 日起）。</p>
   <p>資料來源：桃園市政府地方稅務局<a href="https://tytax.tycg.gov.tw/cl.aspx?n=26977" target="_blank" rel="noopener">出租房屋節稅專區</a>、桃園市政府住宅發展及都市更新處<a href="https://ohd.tycg.gov.tw/cp.aspx?n=8624" target="_blank" rel="noopener">社會住宅包租代管</a>、租賃住宅市場發展及管理條例第 17 條。</p>
   <p class="stamp-date">資料整理日期 2026-08-18</p>
+  <p id="staff-link" hidden style="margin-top:14px">
+    <a href="/daiguan/guide">內部同仁：查看這頁的計分方式說明書 →</a>
+  </p>
 </footer>
 </div>
 
+<script>
+/* 內部入口：僅登入者可見。真正的存取控制在 middleware（/daiguan/guide 需登入），
+   這裡只是登入後才把連結顯示出來，避免房東看到內部文件的入口。 */
+fetch("/api/me",{credentials:"same-origin"})
+  .then(function(r){return r.json()})
+  .then(function(d){ if(d && d.loggedIn){ var el=document.getElementById("staff-link"); if(el) el.hidden=false; } })
+  .catch(function(){});
+</script>
 <script>
 (function(){
   var W={

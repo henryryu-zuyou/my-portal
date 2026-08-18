@@ -2,6 +2,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// 從網址取 next 參數，僅允許站內單層相對路徑（/開頭、非 //），否則回首頁
+function safeNext(): string {
+  if (typeof window === "undefined") return "/";
+  const raw = new URLSearchParams(window.location.search).get("next") || "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -13,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     fetch("/api/me")
       .then(r => r.json())
-      .then(d => { if (d.loggedIn) router.replace("/"); })
+      .then(d => { if (d.loggedIn) router.replace(safeNext()); })
       .catch(() => {});
   }, [router]);
 
@@ -28,7 +36,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password: phone }),
       });
       const d = await res.json();
-      if (d.success) router.replace("/");
+      if (d.success) router.replace(safeNext());
       else setError(d.error || "登入失敗");
     } catch {
       setError("網路錯誤，請稍後再試");
