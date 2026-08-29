@@ -177,6 +177,20 @@ export default function ListingPage() {
           流程：<b>①</b> 上傳線上版代管約 PDF → 產生<b>官網上架包</b>照填 zuyou.com.tw；上架後房源會同步進 Ragic → <b>②</b> 搜尋選定該房源、<b>回填</b>屋主/收款等資料。全新房源在①可手動輸入、免先進 Ragic。
         </p>
 
+        {/* 屋主常見問題（公開頁，免登入，可直接傳給屋主） */}
+        <a
+          href="/faq"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-between gap-2 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-xl px-4 py-3 mb-2 hover:bg-emerald-100 transition"
+        >
+          <span className="text-sm font-semibold">📋 屋主常見問題 FAQ</span>
+          <span className="text-xs text-emerald-700">開啟 ↗</span>
+        </a>
+        <p className="mb-6 text-xs text-gray-400">
+          公開連結、免登入：<span className="select-all">my-portal-fawn.vercel.app/faq</span>，可直接傳給屋主。
+        </p>
+
         <div className="flex flex-col gap-5">
           {/* 選房源 */}
           <div>
