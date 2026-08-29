@@ -48,6 +48,13 @@ export default function Home() {
       external: true, // public/ 靜態頁，要整頁導向而非 client 路由
     },
     {
+      href: "/faq",
+      icon: "📖",
+      title: "屋主常見問題 FAQ",
+      desc: "37 題代管／包租對照，公開連結可直接傳給屋主",
+      external: true, // public/ 靜態頁，免登入即可開
+    },
+    {
       href: "/daiguan/guide",
       icon: "🧮",
       title: "代管建議計分表（內部）",
