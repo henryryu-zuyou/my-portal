@@ -148,6 +148,18 @@ details.qa[open] > summary::after{transform:rotate(-135deg)}
 
 /* ---------- TABLES ---------- */
 .tbl-scroll{overflow-x:auto;margin:0 0 14px;-webkit-overflow-scrolling:touch}
+.calc-ctl{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:0 0 13px;padding:11px 15px;border:1px solid var(--plate-line);
+  background:var(--plate-tint);border-radius:8px;
+}
+.calc-ctl label{font-weight:500;color:var(--plate-deep);font-size:15.5px}
+.calc-ctl select{
+  font-family:var(--mono);font-size:15px;padding:6px 11px;
+  border:1px solid var(--plate-line);border-radius:6px;
+  background:var(--card);color:var(--ink);
+}
+.calc-hint{font-size:13px;color:var(--ink-3)}
 table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px;background:#fff}
 th,td{border:1px solid var(--rule);padding:10px 13px;text-align:left;vertical-align:top}
 thead th{background:var(--plate);color:#fff;font-weight:500;font-size:14px}
@@ -260,59 +272,70 @@ footer strong{color:var(--ink-2)}
   <details class="qa" open>
     <summary><span class="qid">Q1</span><span>我自己租，跟交給租寓，實拿差多少？</span></summary>
     <div class="ans">
-      <p>以<strong>市價月租 2 萬元、房屋現值 80 萬</strong>的桃園房子、屋主綜所稅率 20% 為例，一整年算完是這樣：</p>
+      <p>以<strong>市價月租 2 萬元、房屋現值 80 萬</strong>的桃園房子、屋主綜所稅率 <span data-q1-rate>20%</span> 為例，一整年算完是這樣：</p>
+      <p class="calc-ctl">
+        <label for="q1-rate">您適用的綜所稅率</label>
+        <select id="q1-rate" aria-label="選擇屋主適用的綜合所得稅率">
+          <option value="5">5%</option>
+          <option value="12">12%</option>
+          <option value="20" selected>20%</option>
+          <option value="30">30%</option>
+          <option value="40">40%</option>
+        </select>
+        <span class="calc-hint">改稅率，下表的綜所稅與實拿會跟著重算</span>
+      </p>
       <div class="tbl-scroll">
       <table>
         <thead>
           <tr><th>方式</th><th class="num">年租金收入</th><th class="num">綜所稅</th><th class="num">房屋稅</th><th class="num">服務費</th><th class="num">實拿</th></tr>
         </thead>
         <tbody>
-          <tr>
+          <tr data-q1-row="self-no" data-base="125400" data-note="220,000×57%<br>" data-gross="220000" data-other="25600">
             <th>自己出租<br><small>沒申請「出租房屋<br>優惠稅率」</small></th>
             <td class="num">220,000<br><small>20,000×11<br>扣 1 月空置</small></td>
-            <td class="num">−25,080<br><small>220,000×57%<br>×20%</small></td>
+            <td class="num" data-q1="tax">−25,080<br><small>220,000×57%<br>×20%</small></td>
             <td class="num">−25,600<br><small>800,000<br>×3.2%</small></td>
             <td class="num">0</td>
-            <td class="num"><strong>169,320</strong></td>
+            <td class="num" data-q1="net"><strong>169,320</strong></td>
           </tr>
-          <tr>
+          <tr data-q1-row="self-yes" data-base="125400" data-note="220,000×57%<br>" data-gross="220000" data-other="12000">
             <th>自己出租<br><small>已申請「出租房屋<br>優惠稅率」且達標</small></th>
             <td class="num">220,000<br><small>20,000×11<br>扣 1 月空置</small></td>
-            <td class="num">−25,080<br><small>220,000×57%<br>×20%</small></td>
+            <td class="num" data-q1="tax">−25,080<br><small>220,000×57%<br>×20%</small></td>
             <td class="num">−12,000<br><small>800,000<br>×1.5%</small></td>
             <td class="num">0</td>
-            <td class="num"><strong>182,920</strong></td>
+            <td class="num" data-q1="net"><strong>182,920</strong></td>
           </tr>
-          <tr>
+          <tr data-q1-row="daiguan" data-base="72380" data-note="(220,000−66,000)<br>×47%" data-gross="220000" data-other="44000">
             <th>一般代管</th>
             <td class="num">220,000<br><small>20,000×11<br>扣 1 月空置</small></td>
-            <td class="num">−14,476<br><small>(220,000−66,000)<br>×47%×20%</small></td>
+            <td class="num" data-q1="tax">−14,476<br><small>(220,000−66,000)<br>×47%×20%</small></td>
             <td class="num">−12,000<br><small>800,000<br>×1.5%</small></td>
             <td class="num">−32,000<br><small>代管 22,000<br>＋仲介 10,000</small></td>
-            <td class="num"><strong>161,524</strong></td>
+            <td class="num" data-q1="net"><strong>161,524</strong></td>
           </tr>
-          <tr>
+          <tr data-q1-row="baozu5" data-base="22560" data-note="(120,000−72,000)<br>×47%" data-gross="120000" data-other="25600">
             <th>一般包租<br><small>保證租金 5 折</small></th>
             <td class="num">120,000<br><small>10,000×12<br>空置照付</small></td>
-            <td class="num">−4,512<br><small>(120,000−72,000)<br>×47%×20%</small></td>
+            <td class="num" data-q1="tax">−4,512<br><small>(120,000−72,000)<br>×47%×20%</small></td>
             <td class="num">−25,600<br><small>800,000×3.2%<br>未達租金標準</small></td>
             <td class="num">0</td>
-            <td class="num"><strong>89,888</strong></td>
+            <td class="num" data-q1="net"><strong>89,888</strong></td>
           </tr>
-          <tr>
+          <tr data-q1-row="baozu7" data-base="45120" data-note="(168,000−72,000)<br>×47%" data-gross="168000" data-other="12000">
             <th>一般包租<br><small>保證租金 7 折</small></th>
             <td class="num">168,000<br><small>14,000×12<br>空置照付</small></td>
-            <td class="num">−9,024<br><small>(168,000−72,000)<br>×47%×20%</small></td>
+            <td class="num" data-q1="tax">−9,024<br><small>(168,000−72,000)<br>×47%×20%</small></td>
             <td class="num">−12,000<br><small>800,000×1.5%<br>剛好達標</small></td>
             <td class="num">0</td>
-            <td class="num"><strong>146,976</strong></td>
+            <td class="num" data-q1="net"><strong>146,976</strong></td>
           </tr>
         </tbody>
       </table>
       </div>
       <p><strong>兩種「自己出租」的綜所稅為什麼一樣？</strong>因為兩列都有依法向國稅局申報租賃所得，差別只在有沒有另外向地方稅務局申請「出租房屋優惠稅率」。這是兩個不同的申報：綜所稅是每年 5 月報給國稅局；房屋稅優惠要在 3 月 22 日前主動向稅務局提出申請，而且隔年申報的租賃所得要達當地租金標準，兩個條件缺一不可。很多屋主有乖乖繳綜所稅，卻不知道要申請這個，白白多繳 1 萬 6。</p>
       <div class="key">
-        <p><strong>包租的兩列請一起看，5 折和 7 折差了 5 萬 7。</strong>不只是租金少 4 萬 8——打到 5 折時，年租金 120,000 元低於桃園市的租金標準 168,000 元，房屋稅還拿不到 1.5% 優惠，得按 3.2% 課徵，租金少了、稅又多繳。保證租金區間是市價的 <strong>5 到 7 折</strong>，實際成數必須以現場評估的屋況為準；折數落在哪裡對實拿的影響非常大，簽約前請務必確認清楚。</p>
+        <p><strong>包租的兩列請一起看，5 折和 7 折差了 <span data-q1-gap>5 萬 7</span>。</strong>不只是租金少 4 萬 8——打到 5 折時，年租金 120,000 元低於桃園市的租金標準 168,000 元，房屋稅還拿不到 1.5% 優惠，得按 3.2% 課徵，租金少了、稅又多繳。保證租金區間是市價的 <strong>5 到 7 折</strong>，實際成數必須以現場評估的屋況為準；折數落在哪裡對實拿的影響非常大，簽約前請務必確認清楚。</p>
       </div>
       <p><strong>我們不會說「交給租寓一定賺比較多」。</strong>房子好租、屋主自己有時間管、又把兩邊的申報都做齊，自租的帳面數字確實不差。真正要比的是這三件事會不會發生：</p>
       <ul>
@@ -320,7 +343,7 @@ footer strong{color:var(--ink-2)}
         <li><strong>欠租一次</strong>——押金抵完可能還少好幾萬，加上催討與訴訟的時間</li>
         <li><strong>漏了房屋稅那道申請</strong>——稅率從 1.5% 跳到 3.2%，這一格就差 1 萬 6</li>
       </ul>
-      <p class="law">試算假設：桃園市、房屋現值 80 萬、綜所稅率 20%、全國持有 2 戶以內、自租與代管均假設空置 1 個月。自租採 43% 必要費用率（故乘 57%）；一般代管與一般包租採每月 6,000 元免稅額＋53% 費用率（故乘 47%）；一般代管的仲介服務費以 2 年約 20,000 元攤提為每年 10,000 元，代管費為月租 10%。房屋稅率依桃園市房屋稅徵收率自治條例，租金標準為房屋評定現值 21%。<mark class="todo">上線前請找會計師覆核一次。</mark></p>
+      <p class="law">試算假設：桃園市、房屋現值 80 萬、綜所稅率 <span data-q1-rate>20%</span>、全國持有 2 戶以內、自租與代管均假設空置 1 個月。自租採 43% 必要費用率（故乘 57%）；一般代管與一般包租採每月 6,000 元免稅額＋53% 費用率（故乘 47%）；一般代管的仲介服務費以 2 年約 20,000 元攤提為每年 10,000 元，代管費為月租 10%。房屋稅率依桃園市房屋稅徵收率自治條例，租金標準為房屋評定現值 21%。<mark class="todo">上線前請找會計師覆核一次。</mark></p>
     </div>
   </details>
 
@@ -1006,6 +1029,51 @@ footer strong{color:var(--ink-2)}
     if(btn.dataset.col === 'a') document.body.classList.add('only-a');
     if(btn.dataset.col === 'b') document.body.classList.add('only-b');
   });
+})();
+
+/* Q1 試算表：綜所稅率可自選，綜所稅與實拿即時重算。
+   每列的 data-base 是「乘上稅率前的課稅所得」，data-other 是房屋稅＋服務費（與稅率無關）。
+   預設 20% 的數字直接寫在 HTML 裡，關掉 JS 也看得到完整一版。 */
+(function(){
+  var sel = document.getElementById('q1-rate');
+  if(!sel) return;
+  var rows = document.querySelectorAll('[data-q1-row]');
+  if(!rows.length) return;
+
+  function fmt(n){ return n.toLocaleString('en-US'); }
+
+  /* 57,088 → 「5 萬 7」 */
+  function wan(n){
+    var k = Math.round(n / 1000), w = Math.floor(k / 10), r = k % 10;
+    return r ? w + ' 萬 ' + r : w + ' 萬';
+  }
+
+  function net(tr, rate){
+    return +tr.dataset.gross - Math.round(+tr.dataset.base * rate / 100) - +tr.dataset.other;
+  }
+
+  function render(){
+    var rate = parseFloat(sel.value);
+
+    rows.forEach(function(tr){
+      var tax = Math.round(+tr.dataset.base * rate / 100);
+      tr.querySelector('[data-q1="tax"]').innerHTML =
+        '−' + fmt(tax) + '<br><small>' + tr.dataset.note + '×' + rate + '%</small>';
+      tr.querySelector('[data-q1="net"]').innerHTML = '<strong>' + fmt(net(tr, rate)) + '</strong>';
+    });
+
+    var b5 = document.querySelector('[data-q1-row="baozu5"]');
+    var b7 = document.querySelector('[data-q1-row="baozu7"]');
+    var gap = document.querySelector('[data-q1-gap]');
+    if(b5 && b7 && gap) gap.textContent = wan(net(b7, rate) - net(b5, rate));
+
+    document.querySelectorAll('[data-q1-rate]').forEach(function(el){
+      el.textContent = rate + '%';
+    });
+  }
+
+  sel.addEventListener('change', render);
+  render();   /* 瀏覽器可能記住上次選的稅率，載入時先對齊一次 */
 })();
 </script>
 
