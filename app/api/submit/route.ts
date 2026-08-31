@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycbyzMV8HXFndjRJVZvSIkcNqKfIWsbqY603oWZEU_VbLg7f-FEDd02zrFSt9vKJmjzQ2/exec";
+import { APPS_SCRIPT_URL } from "@/lib/apps-script";
 
 // 在 .env.local 設定 GOOGLE_CHAT_WEBHOOK_URL，留空則不發 Chat 通知
 const CHAT_WEBHOOK_URL = process.env.GOOGLE_CHAT_WEBHOOK_URL;

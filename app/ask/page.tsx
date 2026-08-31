@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FAQ_ENTRIES, FAQ_CATEGORIES, type FaqEntry } from "@/lib/faq-index";
-import { buildSearchIndex, search, type Hit } from "@/lib/faq-search";
+import { buildSearchIndex, search, rank, type Hit } from "@/lib/faq-search";
 
 type Msg =
   | { role: "user"; text: string }
@@ -32,10 +32,28 @@ export default function AskPage() {
     window.scrollTo({ top, behavior: "auto" });
   }, [msgs]);
 
+  // 答不出來的問題記進「AI資料庫」的「屋主問答」分頁，之後才知道要補哪些題目。
+  // 純記錄、不影響畫面，失敗就算了。
+  const logMiss = (question: string, kind: "none" | "maybe") => {
+    const top = rank(question, index).slice(0, 3);
+    fetch("/api/ask-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        question,
+        status: kind === "none" ? "完全沒有" : "只給候選",
+        closest: top.map((h) => `${h.entry.qid} ${h.entry.q}`).join(" / "),
+        score: top[0] ? Number(top[0].score.toFixed(1)) : 0,
+      }),
+    }).catch(() => {});
+  };
+
   const ask = (raw: string) => {
     const q = raw.trim();
     if (!q) return;
     const res = search(q, index);
+    if (res.kind !== "answer") logMiss(q, res.kind);
     const reply: Msg =
       res.kind === "answer"
         ? { role: "bot", kind: "answer", entry: res.hit.entry, related: res.related }
