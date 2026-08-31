@@ -181,6 +181,39 @@ tbody tr:hover td{background:#FCFDFB}
 }
 .key p{margin:0;font-size:15.5px;color:#5A2320}
 .key strong{color:var(--seal)}
+
+/* 結論卡 — 以 logo 三原色（綠 #68C098／藍 #2C8FD2／黃 #FFE452）標示，一題最多用一次 */
+.verdict{
+  position:relative;overflow:hidden;
+  background:#EFF7F4;border:1px solid #CBE2D9;border-radius:10px;
+  padding:18px 19px 15px;margin:4px 0 14px;
+  box-shadow:0 10px 26px -18px rgba(61,69,80,.75);
+}
+.verdict::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,
+    #68C098 0 33.34%,#2C8FD2 33.34% 66.67%,#FFE452 66.67% 100%);
+}
+.verdict-tag{
+  display:inline-block;margin-bottom:10px;padding:3px 10px;border-radius:99px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.16em;font-weight:600;
+  color:#fff;background:#3D4550;
+}
+.verdict p{margin:0 0 11px;font-size:16px;color:#2B3238;line-height:1.8}
+.verdict p strong{color:#1B6FA6}
+.verdict ul{margin:0;padding-left:0;list-style:none}
+.verdict li{
+  position:relative;margin:0 0 7px;padding-left:1.65em;
+  font-size:15.5px;color:#2B3238;line-height:1.75;
+}
+.verdict li:last-child{margin-bottom:0}
+.verdict li strong{color:#3D4550}
+.verdict li::before{
+  content:"";position:absolute;left:.25em;top:.66em;
+  width:8px;height:8px;border-radius:3px;background:#68C098;
+}
+.verdict li:nth-child(2)::before{background:#2C8FD2}
+.verdict li:nth-child(3)::before{background:#FFE452;box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
 .law{
   font-family:var(--mono);font-size:12.5px;color:var(--ink-3);
   border-top:1px dashed var(--rule);padding-top:9px;margin-top:12px;
@@ -378,12 +411,15 @@ footer strong{color:var(--ink-2)}
       </div>
       <p><strong>舊標準單價那一欄是重點：</strong>門檻 176,000 元已經高過 7 折的 168,000，所以<strong>不管土地現值多少、打 5 折還是 7 折，都拿不到 1.5% 優惠</strong>——老房子談包租折數，這件事一定要先算進去。新標準單價那欄則假設公告土地現值在 <strong>333 萬以內</strong>（5 折）、<strong>733 萬以內</strong>（7 折）；超過就會把門檻推高、同樣掉出達標。</p>
       <p>保證租金區間是市價的 <strong>5 到 7 折</strong>，實際成數必須以現場評估的屋況為準；折數落在哪裡對實拿的影響非常大，簽約前請務必確認清楚。</p>
-      <p><strong>我們不會說「交給租寓一定賺比較多」。</strong>房子好租、屋主自己有時間管、又把兩邊的申報都做齊，自租的帳面數字確實不差。真正要比的是這三件事會不會發生：</p>
-      <ul>
-        <li><strong>多空一個月</strong>——自租少 2 萬，包租不受影響</li>
-        <li><strong>欠租一次</strong>——押金抵完可能還少好幾萬，加上催討與訴訟的時間</li>
-        <li><strong>漏了房屋稅那道申請</strong>——稅率從 1.5% 跳到 3.2%，這一格就差 1 萬 3,600</li>
-      </ul>
+      <div class="verdict">
+        <span class="verdict-tag">結論</span>
+        <p><strong>我們不會說「交給租寓一定賺比較多」。</strong>房子好租、屋主自己有時間管、又把兩邊的申報都做齊，自租的帳面數字確實不差。真正要比的是這三件事會不會發生：</p>
+        <ul>
+          <li><strong>多空一個月</strong>——自租少 2 萬，包租不受影響</li>
+          <li><strong>欠租一次</strong>——押金抵完可能還少好幾萬，加上催討與訴訟的時間</li>
+          <li><strong>漏了房屋稅那道申請</strong>——稅率從 1.5% 跳到 3.2%，這一格就差 1 萬 3,600</li>
+        </ul>
+      </div>
       <p class="law">試算假設：桃園市、房屋現值 80 萬、綜所稅率 <span data-q1-rate>20%</span>、全國持有 2 戶以內、自租與代管均假設空置 1 個月。自租採 43% 必要費用率（故乘 57%）；一般代管與一般包租採每月 6,000 元免稅額＋53% 費用率（故乘 47%）；一般代管的仲介服務費以 2 年約 20,000 元攤提為每年 10,000 元，代管費為月租 10%。房屋稅率依桃園市房屋稅徵收率自治條例；房屋稅欄假設自租與代管已申請並申報達當地一般租金標準（1.5%）、包租 5 折未達標（3.2%）、7 折達標（1.5%）。租金標準的算法自 114 年度起改制（見 Q12），個案是否達標依該屋房屋評定現值與公告土地現值認定。<mark class="todo">2026-08-31 已依 114 年度租金標準修正說法、房屋稅達標與否改列為假設；數字仍建議找會計師覆核一次。</mark></p>
     </div>
   </details>
