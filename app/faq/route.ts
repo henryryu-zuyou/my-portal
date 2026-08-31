@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
-import { LANDLORD_FAQ_HTML, stripInternalNotes } from "@/lib/landlord-faq";
+import { LANDLORD_FAQ_HTML } from "@/lib/landlord-faq";
+import { stripInternalNotes } from "@/lib/faq-notes.mjs";
 
 // /faq：屋主常見問題。公開頁（刻意不進 middleware matcher），任何人都能開。
 // 差別只在頁內的黃色內部註記：登入的同仁看得到，對外的版本會先被拿掉。

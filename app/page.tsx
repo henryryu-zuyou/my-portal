@@ -48,6 +48,12 @@ export default function Home() {
       external: true, // public/ 靜態頁，要整頁導向而非 client 路由
     },
     {
+      href: "/ask",
+      icon: "💬",
+      title: "屋主問答（對話式）",
+      desc: "屋主打字提問，從 37 題 FAQ 找答案；公開連結",
+    },
+    {
       href: "/faq",
       icon: "📖",
       title: "屋主常見問題 FAQ",
