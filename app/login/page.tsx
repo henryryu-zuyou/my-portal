@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 // 從網址取 next 參數，僅允許站內單層相對路徑（/開頭、非 //），否則回首頁
@@ -92,6 +93,26 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-5">僅限授權人員使用</p>
+
+        {/* 免登入即可使用的工具，讓沒登入的人也找得到入口 */}
+        <div className="mt-5 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-2">不用登入也能用</p>
+          <Link
+            href="/watermark"
+            className="flex items-center gap-3 border border-gray-200 rounded-xl p-3 hover:border-blue-500 hover:shadow-sm transition"
+          >
+            <span className="text-xl shrink-0">🔒</span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-gray-800">
+                機密文件浮水印
+              </span>
+              <span className="block text-xs text-gray-500">
+                權狀、契約影本蓋浮水印，照片不上傳
+              </span>
+            </span>
+            <span className="ml-auto text-gray-300">›</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -41,6 +41,12 @@ export default function Home() {
       desc: "比較四種身分的年度應繳稅額",
     },
     {
+      href: "/watermark",
+      icon: "🔒",
+      title: "機密文件浮水印",
+      desc: "權狀、契約影本蓋浮水印；免登入，照片不上傳",
+    },
+    {
       href: "/daiguan",
       icon: "⚖️",
       title: "一般代管 vs 社宅代管",
