@@ -7,6 +7,7 @@ export type WatermarkOptions = {
   opacity: number; // 0–1
   fontScale: number; // 字級 = 圖寬 × fontScale
   densityScale: number; // 間距倍率，越小越密
+  angleDeg: number; // 傾斜角度（度）。0 為水平，負值往左上傾
 };
 
 /** 下載輸出的長邊上限。手機 Safari 的 canvas 記憶體上限，超過會畫出空白。 */
@@ -14,8 +15,8 @@ export const MAX_EDGE = 4096;
 /** 即時預覽的長邊上限。拉滑桿要跟得上手。 */
 export const PREVIEW_EDGE = 1200;
 
-/** 浮水印傾斜角度（度）。45° 過陡，易與文件表格線衝突。 */
-const ANGLE_DEG = -30;
+/** 預設傾斜角度（度）。45° 過陡，易與文件表格線衝突，故預設 -30。 */
+export const DEFAULT_ANGLE_DEG = -30;
 const FONT_STACK = '"PingFang TC", "Microsoft JhengHei", system-ui, sans-serif';
 
 export class UnreadableImageError extends Error {}
@@ -158,7 +159,7 @@ export function drawWatermarked(
 
   // 旋轉整塊 pattern，而非逐字旋轉——這樣覆蓋完整且無縫
   if (typeof pattern.setTransform === "function" && typeof DOMMatrix !== "undefined") {
-    pattern.setTransform(new DOMMatrix().rotate(ANGLE_DEG));
+    pattern.setTransform(new DOMMatrix().rotate(opts.angleDeg));
   }
   // 若瀏覽器不支援 setTransform，降級為水平平鋪：浮水印仍在，只是不傾斜
 

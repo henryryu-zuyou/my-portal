@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  DEFAULT_ANGLE_DEG,
   MAX_EDGE,
   PREVIEW_EDGE,
   drawWatermarked,
@@ -50,6 +51,7 @@ export default function WatermarkTool() {
   const [opacity, setOpacity] = useState(0.25);
   const [fontScale, setFontScale] = useState(0.04);
   const [density, setDensity] = useState(1.0);
+  const [angle, setAngle] = useState(DEFAULT_ANGLE_DEG);
 
   const [fileName, setFileName] = useState("");
   const [srcSize, setSrcSize] = useState<{ w: number; h: number } | null>(null);
@@ -86,8 +88,15 @@ export default function WatermarkTool() {
       : text.trim();
 
   const opts: WatermarkOptions = useMemo(
-    () => ({ text: fullText, color, opacity, fontScale, densityScale: density }),
-    [fullText, color, opacity, fontScale, density],
+    () => ({
+      text: fullText,
+      color,
+      opacity,
+      fontScale,
+      densityScale: density,
+      angleDeg: angle,
+    }),
+    [fullText, color, opacity, fontScale, density, angle],
   );
 
   // 重畫預覽。srcSize 進依賴，換圖時（即使設定沒動）也會重畫。
@@ -298,33 +307,50 @@ export default function WatermarkTool() {
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Slider
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+          {/* 內部單位與顯示單位不同的（透明度、字級）在這裡換算，控制項本身只認顯示單位 */}
+          <NumberSlider
             label="透明度"
-            value={opacity}
-            min={0.08}
-            max={0.6}
-            step={0.01}
-            display={`${Math.round(opacity * 100)}%`}
-            onChange={setOpacity}
+            unit="%"
+            value={opacity * 100}
+            min={1}
+            max={100}
+            step={1}
+            decimals={0}
+            onChange={(v) => setOpacity(v / 100)}
           />
-          <Slider
+          <NumberSlider
             label="字的大小"
-            value={fontScale}
-            min={0.02}
-            max={0.08}
-            step={0.002}
-            display={`${(fontScale * 100).toFixed(1)}%`}
-            onChange={setFontScale}
+            unit="%"
+            hint="佔圖寬比例"
+            value={fontScale * 100}
+            min={0.5}
+            max={20}
+            step={0.1}
+            decimals={1}
+            onChange={(v) => setFontScale(v / 100)}
           />
-          <Slider
+          <NumberSlider
             label="密度"
+            unit="×"
+            hint="越小越密"
             value={density}
-            min={0.7}
-            max={2.5}
+            min={0.3}
+            max={5}
             step={0.05}
-            display={density <= 1.1 ? "密" : density >= 2 ? "疏" : "中"}
+            decimals={2}
             onChange={setDensity}
+          />
+          <NumberSlider
+            label="角度"
+            unit="°"
+            hint="0 為水平"
+            value={angle}
+            min={-90}
+            max={90}
+            step={1}
+            decimals={0}
+            onChange={setAngle}
           />
         </div>
 
@@ -363,28 +389,75 @@ export default function WatermarkTool() {
   );
 }
 
-function Slider({
+/**
+ * 滑桿 + 可直接輸入的數值格。
+ * 打字過程用 draft 保留原始輸入（讓「0.」「-」這種中間狀態能打完），
+ * 只要當下能解析成數字就即時套用；失焦後回到正規化顯示。
+ */
+function NumberSlider({
   label,
+  unit,
+  hint,
   value,
   min,
   max,
   step,
-  display,
+  decimals,
   onChange,
 }: {
   label: string;
+  unit: string;
+  hint?: string;
   value: number;
   min: number;
   max: number;
   step: number;
-  display: string;
+  decimals: number;
   onChange: (v: number) => void;
 }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? value.toFixed(decimals);
+  const clamp = (n: number) => Math.min(max, Math.max(min, n));
+
+  const type = (raw: string) => {
+    const n = Number(raw);
+    if (raw.trim() === "" || Number.isNaN(n)) {
+      setDraft(raw); // 空白或還打不成數字，先留著
+      return;
+    }
+    const c = clamp(n);
+    onChange(c);
+    // 「0.」「-」這種還在打的中間狀態要留著，否則使用者打不完小數與負號；
+    // 其餘情況一旦被 clamp 就立刻改寫顯示，不讓輸入格顯示一個沒被採用的數字。
+    const incomplete = /[.-]$/.test(raw);
+    setDraft(incomplete || c === n ? raw : String(c));
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-baseline mb-1">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        <span className="text-xs text-gray-500 tabular-nums">{display}</span>
+      <div className="flex justify-between items-baseline mb-1 gap-2">
+        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+          {label}
+          {hint && (
+            <span className="ml-1.5 text-xs font-normal text-gray-400">
+              {hint}
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-1">
+          <input
+            type="number"
+            inputMode="decimal"
+            min={min}
+            max={max}
+            step={step}
+            value={shown}
+            onChange={(e) => type(e.target.value)}
+            onBlur={() => setDraft(null)}
+            className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm text-right tabular-nums focus:outline-none focus:border-blue-500"
+          />
+          <span className="text-xs text-gray-500 w-3">{unit}</span>
+        </span>
       </div>
       <input
         type="range"
@@ -392,9 +465,22 @@ function Slider({
         max={max}
         step={step}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e) => {
+          setDraft(null); // 拉滑桿時放掉打字草稿，顯示跟著滑桿走
+          onChange(Number(e.target.value));
+        }}
         className="w-full accent-blue-600"
       />
+      <div className="flex justify-between text-[10px] text-gray-400 tabular-nums mt-0.5">
+        <span>
+          {min}
+          {unit}
+        </span>
+        <span>
+          {max}
+          {unit}
+        </span>
+      </div>
     </div>
   );
 }
