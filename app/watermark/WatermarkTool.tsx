@@ -4,12 +4,22 @@ import Link from "next/link";
 import {
   DEFAULT_ANGLE_DEG,
   MAX_EDGE,
+  PDF_MAX_EDGE,
   PREVIEW_EDGE,
+  THUMB_EDGE,
+  closePdf,
   drawWatermarked,
   isHeic,
+  isPdf,
   loadImage,
+  openPdf,
   outputSize,
+  pdfOutputSize,
   releaseImage,
+  renderPdfPage,
+  sourceSize,
+  type ImageSource,
+  type PdfDoc,
   type WatermarkOptions,
 } from "@/lib/watermark";
 
@@ -33,9 +43,11 @@ const DEFAULTS = {
 
 // 錯誤訊息集中管理，避免散落在流程各處
 const ERR = {
-  notImage: "只吃圖片檔。權狀 PDF 請先轉存成圖片。",
+  notSupported: "只吃圖片和 PDF。Word、Excel 請先轉存成 PDF 或圖片。",
   heic: "這是 iPhone 的 HEIC 格式，桌機 Chrome 讀不了。請用 iPhone 分享成 JPG，或改用 Safari 開這頁。",
   unreadable: "這張圖讀不出來，換一張試試。",
+  pdfBroken: "這個 PDF 打不開，可能是加密或檔案損壞。",
+  noPage: "請至少選一頁。",
 };
 
 const readSavedText = () => {
@@ -67,10 +79,18 @@ export default function WatermarkTool() {
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(""); // 多頁下載時的進度文字
 
-  const imgRef = useRef<ImageBitmap | HTMLImageElement | null>(null);
+  // 浮水印底圖來源。放 state 而非 ref：PDF 切頁時來源會換，state 變更本身就是重繪信號
+  const [source, setSource] = useState<ImageSource | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // PDF：文件本體用 ref（不需觸發重繪），頁面縮圖與選取狀態要進 state
+  const pdfRef = useRef<PdfDoc | null>(null);
+  const [pages, setPages] = useState<{ num: number; thumb: string }[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
 
   // 記住浮水印文字，下次開頁自動填回
   useEffect(() => {
@@ -81,13 +101,11 @@ export default function WatermarkTool() {
     }
   }, [text]);
 
-  // 卸載時釋放影像，避免記憶體累積
-  useEffect(
-    () => () => {
-      if (imgRef.current) releaseImage(imgRef.current);
-    },
-    [],
-  );
+  // cleanup 拿到的是「上一個」source，故換圖與卸載都會釋放，不會累積
+  useEffect(() => () => { if (source) releaseImage(source); }, [source]);
+
+  // 卸載時關閉 PDF
+  useEffect(() => () => { if (pdfRef.current) closePdf(pdfRef.current); }, []);
 
   const hasText = text.trim().length > 0;
   const fullText = !hasText
@@ -108,63 +126,135 @@ export default function WatermarkTool() {
     [fullText, color, opacity, fontScale, density, angle],
   );
 
-  // 重畫預覽。srcSize 進依賴，換圖時（即使設定沒動）也會重畫。
+  // 重畫預覽。source 進依賴，換圖或換頁時（即使設定沒動）也會重畫。
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
-    const img = imgRef.current;
-    if (!canvas || !img || !srcSize) return;
-    drawWatermarked(canvas, img, opts, PREVIEW_EDGE);
-  }, [opts, srcSize]);
+    if (!canvas || !source) return;
+    drawWatermarked(canvas, source, opts, PREVIEW_EDGE);
+  }, [opts, source]);
 
   useEffect(() => {
     redraw();
   }, [redraw]);
 
+  /** 收下新檔案。清掉前一份的所有狀態，再依圖片／PDF 走各自的路。 */
   const accept = useCallback(async (file: File) => {
     setError("");
-    if (!file.type.startsWith("image/") && !isHeic(file)) {
-      setError(ERR.notImage);
+    const pdf = isPdf(file);
+    if (!pdf && !file.type.startsWith("image/") && !isHeic(file)) {
+      setError(ERR.notSupported);
       return;
     }
+
     setBusy(true);
+    // 先清乾淨，避免換檔後還殘留上一份的頁面清單或預覽
+    if (pdfRef.current) {
+      closePdf(pdfRef.current);
+      pdfRef.current = null;
+    }
+    setPages([]);
+    setSelected(new Set());
+    setCurrentPage(1);
+    setSource(null);
+    setSrcSize(null);
+
     try {
-      const img = await loadImage(file);
-      if (imgRef.current) releaseImage(imgRef.current);
-      imgRef.current = img;
-      const w = img instanceof HTMLImageElement ? img.naturalWidth : img.width;
-      const h = img instanceof HTMLImageElement ? img.naturalHeight : img.height;
-      setSrcSize({ w, h });
+      if (pdf) {
+        const doc = await openPdf(file);
+        pdfRef.current = doc;
+
+        // 逐頁渲染小縮圖供選頁；縮圖很小，記憶體壓力可忽略
+        const thumbs: { num: number; thumb: string }[] = [];
+        for (let n = 1; n <= doc.numPages; n++) {
+          const c = await renderPdfPage(doc, n, THUMB_EDGE);
+          thumbs.push({ num: n, thumb: c.toDataURL("image/jpeg", 0.7) });
+        }
+        setPages(thumbs);
+        setSelected(new Set(thumbs.map((t) => t.num))); // 預設全選
+
+        // 預覽底圖一律由下面那個 effect 渲染（含第 1 頁），這裡不要自己畫一張，
+        // 否則「切到第 3 頁再切回第 1 頁」時 effect 會以為沒事做，畫面就停在第 3 頁。
+        // PDF 沒有原始像素尺寸，顯示輸出尺寸；用算的就好，不必真的渲染一次。
+        setSrcSize(await pdfOutputSize(doc, 1, PDF_MAX_EDGE));
+      } else {
+        const img = await loadImage(file);
+        setSource(img);
+        setSrcSize(sourceSize(img));
+      }
       setFileName(file.name);
     } catch {
-      setError(isHeic(file) ? ERR.heic : ERR.unreadable);
+      setError(pdf ? ERR.pdfBroken : isHeic(file) ? ERR.heic : ERR.unreadable);
     } finally {
       setBusy(false);
     }
   }, []);
 
+  // 切頁：重新渲染該頁當預覽底圖
+  useEffect(() => {
+    const doc = pdfRef.current;
+    if (!doc || pages.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const c = await renderPdfPage(doc, currentPage, PREVIEW_EDGE);
+        if (!cancelled) setSource(c);
+      } catch {
+        if (!cancelled) setError(ERR.pdfBroken);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentPage, pages.length]);
+
+  const saveCanvas = async (canvas: HTMLCanvasElement, name: string) => {
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", 0.92),
+    );
+    if (!blob) {
+      setError(ERR.unreadable);
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const download = async () => {
-    const img = imgRef.current;
-    if (!img || !hasText) return;
+    if (!hasText) return;
+    const base = fileName.replace(/\.[^.]+$/, "") || "document";
+    const doc = pdfRef.current;
+
     setBusy(true);
     try {
-      const out = document.createElement("canvas");
-      drawWatermarked(out, img, opts, MAX_EDGE);
-      const blob = await new Promise<Blob | null>((res) =>
-        out.toBlob(res, "image/jpeg", 0.92),
-      );
-      if (!blob) {
-        setError(ERR.unreadable);
-        return;
+      if (doc && pages.length > 0) {
+        const nums = [...selected].sort((a, b) => a - b);
+        if (nums.length === 0) {
+          setError(ERR.noPage);
+          return;
+        }
+        // 逐頁以全解析度渲染再蓋浮水印。一次只留一張大 canvas，避免多頁一起爆記憶體。
+        for (let i = 0; i < nums.length; i++) {
+          const n = nums[i];
+          setProgress(`處理第 ${i + 1}/${nums.length} 頁…`);
+          const pageCanvas = await renderPdfPage(doc, n, PDF_MAX_EDGE);
+          const out = document.createElement("canvas");
+          drawWatermarked(out, pageCanvas, opts, PDF_MAX_EDGE);
+          await saveCanvas(out, `${base}-p${n}-watermark.jpg`);
+          // 連續觸發下載會被瀏覽器當成濫用而擋掉，隔一下再下一張
+          if (i < nums.length - 1) await new Promise((r) => setTimeout(r, 300));
+        }
+      } else if (source) {
+        const out = document.createElement("canvas");
+        drawWatermarked(out, source, opts, MAX_EDGE);
+        await saveCanvas(out, `${base}-watermark.jpg`);
       }
-      const base = fileName.replace(/\.[^.]+$/, "") || "document";
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${base}-watermark.jpg`;
-      a.click();
-      URL.revokeObjectURL(url);
     } finally {
       setBusy(false);
+      setProgress("");
     }
   };
 
@@ -180,6 +270,21 @@ export default function WatermarkTool() {
   const field =
     "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500";
   const label = "block text-sm font-medium text-gray-700 mb-1";
+
+  const isPdfLoaded = pages.length > 0;
+
+  const togglePage = (n: number) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
+      return next;
+    });
+
+  const toggleAll = () =>
+    setSelected((prev) =>
+      prev.size === pages.length ? new Set() : new Set(pages.map((pg) => pg.num)),
+    );
 
   const outSize = srcSize ? outputSize(srcSize.w, srcSize.h, MAX_EDGE) : null;
   const shrunk =
@@ -226,12 +331,14 @@ export default function WatermarkTool() {
                 <span className="text-gray-400">（點此換一張）</span>
               </>
             ) : (
-              <>把照片拖到這裡，或點擊選擇檔案／拍照</>
+              <>把照片或 PDF 拖到這裡，或點擊選擇檔案／拍照</>
             )}
           </p>
           {srcSize && (
             <p className="text-xs text-gray-400 mt-1">
-              原尺寸 {srcSize.w}×{srcSize.h}
+              {isPdfLoaded
+                ? `${pages.length} 頁 · 每頁輸出 ${srcSize.w}×${srcSize.h}`
+                : `原尺寸 ${srcSize.w}×${srcSize.h}`}
               {shrunk && outSize && (
                 <span className="text-amber-600">
                   ．已縮至 {outSize.w}×{outSize.h}（長邊上限 {MAX_EDGE}px）
@@ -242,7 +349,7 @@ export default function WatermarkTool() {
           <input
             ref={inputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,application/pdf"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -256,6 +363,59 @@ export default function WatermarkTool() {
           <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             {error}
           </p>
+        )}
+
+        {/* ── 選頁（只有 PDF 才出現）─────────── */}
+        {isPdfLoaded && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <span className="text-sm font-medium text-gray-700">
+                要蓋浮水印的頁
+                <span className="ml-1.5 text-xs font-normal text-gray-400">
+                  點縮圖可預覽該頁
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-xs text-gray-400 hover:text-gray-600 underline shrink-0"
+              >
+                {selected.size === pages.length ? "全部取消" : "全選"}
+              </button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {pages.map((pg) => (
+                <div key={pg.num} className="shrink-0 w-20">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage(pg.num)}
+                    className={
+                      "block w-full rounded-lg overflow-hidden border-2 transition " +
+                      (currentPage === pg.num
+                        ? "border-blue-500"
+                        : "border-gray-200 hover:border-gray-400")
+                    }
+                  >
+                    {/* 縮圖是暫時性的 data URL，不適用 next/image */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={pg.thumb}
+                      alt={`第 ${pg.num} 頁`}
+                      className="w-full h-auto block bg-white"
+                    />
+                  </button>
+                  <label className="flex items-center justify-center gap-1.5 mt-1 text-xs text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(pg.num)}
+                      onChange={() => togglePage(pg.num)}
+                    />
+                    第 {pg.num} 頁
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ── 設定 ───────────────────────── */}
@@ -365,12 +525,19 @@ export default function WatermarkTool() {
 
         {/* ── 預覽 ───────────────────────── */}
         <div className="mt-6">
-          <label className={label}>預覽</label>
+          <label className={label}>
+            預覽
+            {isPdfLoaded && (
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                第 {currentPage} 頁
+              </span>
+            )}
+          </label>
           <div className="border border-gray-200 rounded-xl bg-gray-100 p-2 min-h-40 flex items-center justify-center">
             {srcSize ? (
               <canvas ref={canvasRef} className="max-w-full h-auto rounded" />
             ) : (
-              <p className="text-sm text-gray-400 py-10">選一張照片就會顯示預覽</p>
+              <p className="text-sm text-gray-400 py-10">選一張照片或 PDF 就會顯示預覽</p>
             )}
           </div>
         </div>
@@ -378,16 +545,20 @@ export default function WatermarkTool() {
         <button
           type="button"
           onClick={download}
-          disabled={!srcSize || !hasText || busy}
+          disabled={!srcSize || !hasText || busy || (isPdfLoaded && selected.size === 0)}
           className="mt-5 w-full bg-blue-600 text-white rounded-lg py-3 text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
         >
           {busy
-            ? "處理中…"
+            ? progress || "處理中…"
             : !srcSize
-              ? "請先選一張照片"
+              ? "請先選一張照片或 PDF"
               : !hasText
                 ? "請先輸入浮水印文字"
-                : "下載加好浮水印的圖"}
+                : isPdfLoaded
+                  ? selected.size === 0
+                    ? "請至少選一頁"
+                    : `下載選取的 ${selected.size} 頁`
+                  : "下載加好浮水印的圖"}
         </button>
 
         <p className="mt-5 text-xs text-gray-400 leading-relaxed border-t border-gray-100 pt-4">

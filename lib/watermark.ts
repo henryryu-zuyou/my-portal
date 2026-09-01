@@ -10,8 +10,20 @@ export type WatermarkOptions = {
   angleDeg: number; // 傾斜角度（度）。0 為水平，負值往左上傾
 };
 
+/** 可以拿來當浮水印底圖的來源。PDF 頁面渲染後即為 canvas。 */
+export type ImageSource = ImageBitmap | HTMLImageElement | HTMLCanvasElement;
+
 /** 下載輸出的長邊上限。手機 Safari 的 canvas 記憶體上限，超過會畫出空白。 */
 export const MAX_EDGE = 4096;
+/**
+ * PDF 頁面光柵化的長邊上限，比照片的 MAX_EDGE 低。
+ * PDF 是向量，解析度由我們決定：A4 長邊 3000px 約等於 255dpi，
+ * 對文件閱讀已很清楚，而像素數只有 4096 長邊的一半多，渲染與 JPEG 編碼都快得多。
+ */
+export const PDF_MAX_EDGE = 3000;
+
+/** 選頁縮圖的長邊。 */
+export const THUMB_EDGE = 140;
 /** 即時預覽的長邊上限。拉滑桿要跟得上手。 */
 export const PREVIEW_EDGE = 1200;
 
@@ -32,9 +44,7 @@ export function isHeic(file: File): boolean {
  * 解碼影像並套用 EXIF orientation。
  * 手機拍的 JPEG 靠 EXIF 標記方向，天真繪製會轉 90°——權狀幾乎都是手機拍的，此處必須正確。
  */
-export async function loadImage(
-  file: File,
-): Promise<ImageBitmap | HTMLImageElement> {
+export async function loadImage(file: File): Promise<ImageSource> {
   // 主路徑：createImageBitmap 明確要求套用檔案內的方向資訊
   if (typeof createImageBitmap === "function") {
     try {
@@ -64,16 +74,21 @@ function loadViaImgElement(file: File): Promise<HTMLImageElement> {
 }
 
 /** 釋放影像資源。換圖時務必呼叫，否則連續換圖會累積記憶體。 */
-export function releaseImage(img: ImageBitmap | HTMLImageElement): void {
+export function releaseImage(img: ImageSource): void {
   if (typeof ImageBitmap !== "undefined" && img instanceof ImageBitmap) {
     img.close();
   }
 }
 
-function naturalSize(img: ImageBitmap | HTMLImageElement) {
+function naturalSize(img: ImageSource) {
   return img instanceof HTMLImageElement
     ? { w: img.naturalWidth, h: img.naturalHeight }
     : { w: img.width, h: img.height };
+}
+
+/** 取得來源的像素尺寸。UI 顯示原尺寸時用。 */
+export function sourceSize(img: ImageSource) {
+  return naturalSize(img);
 }
 
 /** 等比縮放至長邊不超過 maxEdge；未超過則原尺寸回傳。 */
@@ -134,7 +149,7 @@ function buildTile(
  */
 export function drawWatermarked(
   canvas: HTMLCanvasElement,
-  img: ImageBitmap | HTMLImageElement,
+  img: ImageSource,
   opts: WatermarkOptions,
   maxEdge: number,
 ): void {
@@ -168,4 +183,91 @@ export function drawWatermarked(
   ctx.fillStyle = pattern;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
+}
+
+// ── PDF ──────────────────────────────────────────────────────────
+// 用專案已有的 unpdf（內含 pdfjs 5）在瀏覽器把頁面光柵化，PDF 同樣不離開裝置。
+
+/**
+ * PDF 渲染一律用 intent "print"。
+ * pdfjs 的 "display" intent 靠 requestAnimationFrame 分批繪製，使用者一切到別的
+ * 分頁，瀏覽器就凍結 rAF，渲染會永遠停在半路。"print" 不走 rAF，而我們要的正是
+ * 「整頁完整光柵化」，語意本來就相符。
+ */
+const PDF_INTENT = "print";
+
+/**
+ * 渲染倍率上限。PDF 是向量，倍率可任意放大；若頁面本身很小（例如名片尺寸），
+ * 硬放大到 MAX_EDGE 只會得到一張又慢又模糊的圖，故設上限。
+ */
+const PDF_MAX_SCALE = 8;
+
+type PdfViewport = { width: number; height: number };
+type PdfPageProxy = {
+  getViewport(o: { scale: number }): PdfViewport;
+  render(o: {
+    canvas: HTMLCanvasElement;
+    viewport: PdfViewport;
+    intent: string;
+  }): { promise: Promise<void> };
+  cleanup(): void;
+};
+export type PdfDoc = {
+  numPages: number;
+  getPage(n: number): Promise<PdfPageProxy>;
+  destroy(): Promise<void>;
+};
+
+export function isPdf(file: File): boolean {
+  return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+}
+
+/** 開啟 PDF。pdfjs 只在使用者真的選了 PDF 時才動態載入，不拖累初始載入。 */
+export async function openPdf(file: File): Promise<PdfDoc> {
+  const { getDocument } = await import("unpdf/pdfjs");
+  const data = new Uint8Array(await file.arrayBuffer());
+  const doc = await getDocument({ data }).promise;
+  return doc as unknown as PdfDoc;
+}
+
+export function closePdf(doc: PdfDoc): void {
+  void doc.destroy();
+}
+
+function pageScale(unit: PdfViewport, maxEdge: number) {
+  return Math.min(maxEdge / Math.max(unit.width, unit.height), PDF_MAX_SCALE);
+}
+
+/**
+ * 算出某頁的輸出尺寸，不做渲染。
+ * UI 要顯示「每頁輸出 W×H」，為此跑一次全解析度渲染太浪費。
+ */
+export async function pdfOutputSize(
+  doc: PdfDoc,
+  pageNum: number,
+  maxEdge: number,
+): Promise<{ w: number; h: number }> {
+  const page = await doc.getPage(pageNum);
+  const unit = page.getViewport({ scale: 1 });
+  const vp = page.getViewport({ scale: pageScale(unit, maxEdge) });
+  page.cleanup();
+  return { w: Math.floor(vp.width), h: Math.floor(vp.height) };
+}
+
+/** 把某一頁渲染成 canvas，長邊不超過 maxEdge。 */
+export async function renderPdfPage(
+  doc: PdfDoc,
+  pageNum: number,
+  maxEdge: number,
+): Promise<HTMLCanvasElement> {
+  const page = await doc.getPage(pageNum);
+  const unit = page.getViewport({ scale: 1 });
+  const vp = page.getViewport({ scale: pageScale(unit, maxEdge) });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(vp.width));
+  canvas.height = Math.max(1, Math.floor(vp.height));
+  await page.render({ canvas, viewport: vp, intent: PDF_INTENT }).promise;
+  page.cleanup();
+  return canvas;
 }
