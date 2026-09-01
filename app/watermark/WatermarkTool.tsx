@@ -22,6 +22,15 @@ const COLORS = [
   { name: "白", value: "#ffffff" },
 ];
 
+// 實際拿真實權狀調出來的預設值：黑色細字、淡、偏疏，蓋得住又不擋地號與面積
+const DEFAULTS = {
+  color: "#000000",
+  opacity: 0.15,
+  fontScale: 0.03,
+  density: 2.0,
+  withDate: false,
+};
+
 // 錯誤訊息集中管理，避免散落在流程各處
 const ERR = {
   notImage: "只吃圖片檔。權狀 PDF 請先轉存成圖片。",
@@ -45,12 +54,12 @@ const todayStr = () => {
 
 export default function WatermarkTool() {
   const [text, setText] = useState(readSavedText);
-  const [withDate, setWithDate] = useState(true);
+  const [withDate, setWithDate] = useState(DEFAULTS.withDate);
   const [today] = useState(todayStr);
-  const [color, setColor] = useState(COLORS[0].value);
-  const [opacity, setOpacity] = useState(0.25);
-  const [fontScale, setFontScale] = useState(0.04);
-  const [density, setDensity] = useState(1.0);
+  const [color, setColor] = useState(DEFAULTS.color);
+  const [opacity, setOpacity] = useState(DEFAULTS.opacity);
+  const [fontScale, setFontScale] = useState(DEFAULTS.fontScale);
+  const [density, setDensity] = useState(DEFAULTS.density);
   const [angle, setAngle] = useState(DEFAULT_ANGLE_DEG);
 
   const [fileName, setFileName] = useState("");
