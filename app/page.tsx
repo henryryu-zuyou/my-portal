@@ -67,6 +67,13 @@ export default function Home() {
       external: true, // public/ 靜態頁，免登入即可開
     },
     {
+      href: "/faq-diagrams",
+      icon: "🗺️",
+      title: "屋主常見問題 圖解",
+      desc: "FAQ 裡最難用文字講清楚的 11 題，一題一張圖；公開連結",
+      external: true, // public/ 靜態頁，免登入即可開
+    },
+    {
       href: "/daiguan/guide",
       icon: "🧮",
       title: "代管建議計分表（內部）",
