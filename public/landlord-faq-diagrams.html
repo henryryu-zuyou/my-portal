@@ -52,7 +52,6 @@ nav a:hover{color:var(--ink)}
 nav a:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 section{padding-top:34px;margin-top:34px;border-top:1px solid var(--rule)}
 section:first-of-type{border-top:0}
-.qno{font-family:var(--serif);font-size:13px;color:var(--brand);letter-spacing:.1em}
 h2{font-family:var(--serif);font-weight:600;font-size:22px;line-height:1.45;margin:4px 0 6px}
 .lede{color:var(--ink-2);font-size:15px;margin:0 0 4px;max-width:36em}
 .fig{margin:18px 0 0;overflow-x:auto;background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:8px 10px}
@@ -81,24 +80,23 @@ footer a{color:var(--ink-2)}
 
 <div class="brand">租寓 Zuyou</div>
 <h1>屋主常見問題　圖解彙整</h1>
-<p class="standfirst">把 FAQ 裡最難用文字講清楚的幾題畫成圖。每張圖對應一題，數字與條件以該題內文為準。</p>
+<p class="standfirst">把代管與包租最難用文字講清楚的幾件事畫成圖。數字與條件以圖上標示為準，個案仍以合約約定為準。</p>
 
 <nav>
-  <a href="#q2">Q2 代管與包租</a>
-  <a href="#q4">Q4 保證租金折數</a>
-  <a href="#q5">Q5 租金怎麼定</a>
-  <a href="#q7">Q7 服務費</a>
-  <a href="#q8">Q8 入帳與明細</a>
-  <a href="#q10">Q10 押金保管</a>
-  <a href="#q17">Q17 房客審核</a>
-  <a href="#q23">Q23 修繕責任</a>
-  <a href="#q24">Q24 修繕授權</a>
-  <a href="#q26">Q26 整理建議</a>
-  <a href="#q35">Q35 流程時間</a>
+  <a href="#modes">代管與包租</a>
+  <a href="#guarantee">保證租金折數</a>
+  <a href="#pricing">租金怎麼定</a>
+  <a href="#fee">服務費</a>
+  <a href="#payout">入帳與明細</a>
+  <a href="#deposit">押金保管</a>
+  <a href="#screening">房客審核</a>
+  <a href="#repair">修繕責任</a>
+  <a href="#repair-approval">修繕授權</a>
+  <a href="#prep">整理建議</a>
+  <a href="#timeline">流程時間</a>
 </nav>
 
-<section id="q2">
-<div class="qno">Q2</div>
+<section id="modes">
 <h2>包租跟代管差在哪？我該選哪一個？</h2>
 <p class="lede">差別的根源是租約簽在誰跟誰之間。代管的線中間沒有租寓，錢和風險都直達屋主；包租的線中間卡了一個租寓，空租和欠租就停在那一格。</p>
 <div class="fig">
@@ -174,8 +172,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q4">
-<div class="qno">Q4</div>
+<section id="guarantee">
 <h2>保證租金怎麼算？大概是市價的幾成？</h2>
 <p class="lede">折數落在 5 到 7 折之間，實際成數由五項條件決定，看過屋況才定得出來。</p>
 <div class="fig">
@@ -195,8 +192,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q5">
-<div class="qno">Q5</div>
+<section id="pricing">
 <h2>租金怎麼定？誰說了算？</h2>
 <p class="lede">前兩步是租寓做的，但線走到「屋主決定開價」就停在屋主身上，往下才分岔。</p>
 <div class="fig">
@@ -216,8 +212,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q7">
-<div class="qno">Q7</div>
+<section id="fee">
 <h2>服務費怎麼收？除此之外還有沒有其他費用？</h2>
 <p class="lede">仲介費是一次性的點，代管費是連續的線，空租期間兩條都歸零。整條軸上只有這兩種費用。</p>
 <div class="fig">
@@ -245,8 +240,7 @@ footer a{color:var(--ink-2)}
 <p class="cap">包租的屋主端不另收服務費，租寓的收益來自轉租價差，同時承擔空置與欠租風險。</p>
 </section>
 
-<section id="q8">
-<div class="qno">Q8</div>
+<section id="payout">
 <h2>每月幾號入帳？我看得到收支明細嗎？</h2>
 <p class="lede">上面兩格是時間，下面的算式是代管表的結構。最後一列的「屋主應收」與實際代管表上的欄位同名。</p>
 <div class="fig">
@@ -265,8 +259,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q10">
-<div class="qno">Q10</div>
+<section id="deposit">
 <h2>押金由誰收、放在哪裡？退租要扣款時誰決定？</h2>
 <p class="lede">兩種保管方式的差別只有一件事：押金當下放在誰的帳戶，而那個位置決定了退租後房客要等多久。</p>
 <div class="fig">
@@ -282,11 +275,10 @@ footer a{color:var(--ink-2)}
 <text class="ts" x="40" y="214" dominant-baseline="central">押金依法不得超過 2 個月租金；退租扣款一律經屋主同意後才執行。</text>
 </svg>
 </div>
-<p class="cap">此圖為濃縮版。FAQ 內文另列「雙方各持一半」的第三種方式。</p>
+<p class="cap">此圖為常見的兩種做法，另可約定雙方各持一半。</p>
 </section>
 
-<section id="q17">
-<div class="qno">Q17</div>
+<section id="screening">
 <h2>房客怎麼篩選？我看得到資料、能不能否決？</h2>
 <p class="lede">審核項目是鋪陳，決定權才是答案——而這題的答案代管跟包租不一樣。</p>
 <div class="fig">
@@ -306,8 +298,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q23">
-<div class="qno">Q23</div>
+<section id="repair">
 <h2>修繕責任怎麼分？誰認定是誰的問題？</h2>
 <p class="lede">四種情況是一條線的兩邊。不管落在哪一邊，認定的依據只有一份文件。</p>
 <div class="fig">
@@ -326,8 +317,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q24">
-<div class="qno">Q24</div>
+<section id="repair-approval">
 <h2>多少金額以內租寓可以直接修、不用先問我？</h2>
 <p class="lede">第一層是常態，下面兩層是備而不用。先給原則，再給例外。</p>
 <div class="fig">
@@ -340,8 +330,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q26">
-<div class="qno">Q26</div>
+<section id="prep">
 <h2>我需要先花錢整理或添購傢俱嗎？</h2>
 <p class="lede">三級是優先順序，不是報價單。同樣是花錢，每一級買到的東西不一樣。</p>
 <div class="fig">
@@ -355,8 +344,7 @@ footer a{color:var(--ink-2)}
 </div>
 </section>
 
-<section id="q35">
-<div class="qno">Q35</div>
+<section id="timeline">
 <h2>整個流程要多久？</h2>
 <p class="lede">前三步免費、不用簽任何東西，第四步才開始有承諾。屋主的第一個決策點在中間那條線上。</p>
 <div class="fig">
@@ -377,8 +365,8 @@ footer a{color:var(--ink-2)}
 </section>
 
 <footer>
-本頁為 FAQ 圖解，內容以〈屋主常見問題〉各題內文為準。稅務數字為一般性說明，不構成稅務或法律意見，個案適用請洽會計師或稅捐機關。<br>
-完整 37 題見 <a href="/faq">屋主常見問題</a>。租寓 Zuyou／桃園市全區、新北市林口。
+本頁為一般性說明，不構成稅務或法律意見，實際條件以合約約定為準，個案適用請洽會計師或稅捐機關。<br>
+租寓 Zuyou／桃園市全區、新北市林口。
 </footer>
 
 </div>
