@@ -67,6 +67,15 @@ h2{font-family:var(--serif);font-weight:600;font-size:22px;line-height:1.45;marg
 .leader{stroke:var(--leader);stroke-width:1;stroke-dasharray:4 4;fill:none}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-3);line-height:1.8}
 footer a{color:var(--ink-2)}
+.share{margin:18px 0 0}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border:0;border-radius:999px;background:var(--brand);color:#fff;font:500 15px/1 var(--sans);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.share-btn:active{transform:scale(.96)}
+.share-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.share-btn svg{width:18px;height:18px;flex:none}
+.share-msg{margin:10px 0 0;font-size:14px;color:var(--ink-2);display:none}
+.share-msg.show{display:block}
+.share-msg input{display:block;width:100%;max-width:420px;margin-top:6px;padding:9px 10px;border:1px solid var(--rule-2);border-radius:8px;background:var(--panel);color:var(--ink);font:14px var(--sans)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .share-btn{color:#17181A}}
 @media (max-width:620px){
   h1{font-size:27px}
   h2{font-size:20px}
@@ -81,6 +90,11 @@ footer a{color:var(--ink-2)}
 <div class="brand">租寓 Zuyou</div>
 <h1>屋主常見問題　圖解彙整</h1>
 <p class="standfirst">把代管與包租最難用文字講清楚的幾件事畫成圖。數字與條件以圖上標示為準，個案仍以合約約定為準。</p>
+
+<div class="share">
+<button type="button" class="share-btn" aria-label="分享本頁連結"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享這一頁</button>
+<div class="share-msg" role="status" aria-live="polite"></div>
+</div>
 
 <nav>
   <a href="#modes">代管與包租</a>
@@ -369,7 +383,59 @@ footer a{color:var(--ink-2)}
 本頁為一般性說明，不構成稅務或法律意見，實際條件以合約約定為準，個案適用請洽會計師或稅捐機關。<br>
 租寓 Zuyou／桃園市全區、新北市林口。
 </footer>
+<div class="share">
+<button type="button" class="share-btn" aria-label="分享本頁連結"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享這一頁</button>
+<div class="share-msg" role="status" aria-live="polite"></div>
+</div>
 
 </div>
+
+<script>
+(function(){
+  // 一律分享 /faq-diagrams（直接開 .html 檔名時也換回短網址）
+  var URL_ = location.origin + '/faq-diagrams';
+  var TITLE = '屋主常見問題 圖解彙整｜租寓';
+  var TEXT = '租寓屋主常見問題圖解：代管與包租、租金、服務費、押金、修繕一次看懂';
+
+  function setup(box){
+    var btn = box.querySelector('.share-btn');
+    var msg = box.querySelector('.share-msg');
+    var timer;
+    function show(html, stay){
+      clearTimeout(timer);
+      msg.innerHTML = html;
+      msg.classList.add('show');
+      if(!stay) timer = setTimeout(function(){ msg.classList.remove('show'); }, 3000);
+    }
+    function manual(){
+      show('請長按下方連結複製：<input readonly value="' + URL_ + '">', true);
+      var inp = msg.querySelector('input');
+      inp.focus(); inp.select();
+    }
+    function copy(){
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(URL_).then(function(){ show('已複製連結，可以貼到 LINE 了'); }, manual);
+          return;
+        }
+      }catch(e){}
+      manual();
+    }
+    btn.addEventListener('click', function(){
+      if(navigator.share){
+        try{
+          navigator.share({title:TITLE, text:TEXT, url:URL_}).catch(function(err){
+            if(err && err.name === 'AbortError') return; // 使用者自己取消
+            copy();
+          });
+          return;
+        }catch(e){}
+      }
+      copy();
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.share'), setup);
+})();
+</script>
 </body>
 </html>
