@@ -61,7 +61,7 @@ async function fetchHouseDetail(hit: SearchHit): Promise<House | null> {
   if (!md.trimStart().startsWith("#")) return null; // 不存在時會回官網首頁 HTML
   const type = md.match(/\*\*房屋類型\*\*: *(\S+)/)?.[1] || "";
   const vacant = (md.match(/何時可正式出租？\*\*: *可立即入住/g) || []).length;
-  if (vacant === 0) return null; // 只留目前有空房的（滿租但仍掛官網的不列）
+  // 滿租的也列（vacant=0），方便提前蒐集租客資料
   return { name: hit.title.trim(), type, area: hit.area, addr: hit.addr, vacant };
 }
 
@@ -85,16 +85,17 @@ async function fetchAllListed(): Promise<House[]> {
   const details = await mapLimit(hits, 16, (h) => fetchHouseDetail(h).catch(() => null));
   const seen = new Set<string>();
   const out = details.filter((h): h is House => !!h && !seen.has(h.name) && !!seen.add(h.name));
-  out.sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+  // 有空房的排前面，同組再依名稱排序
+  out.sort((a, b) => Number(b.vacant > 0) - Number(a.vacant > 0) || a.name.localeCompare(b.name, "zh-Hant"));
   // 空結果視為異常（官網改版/暫時失敗），丟出錯誤 → 不寫入快取，下次自動重試
-  if (out.length === 0) throw new Error("官網回傳 0 筆空房房源，不快取");
+  if (out.length === 0) throw new Error("官網回傳 0 筆房源，不快取");
   return out;
 }
 
 // 跨冷啟動的持久快取（Next.js Data Cache），過期自動 stale-while-revalidate
 const getCachedHouses = unstable_cache(
   async (): Promise<House[]> => fetchAllListed(),
-  ["links-houses-qijia-taoyuan-v4"], // v4：資料來源改為官網公開搜尋
+  ["links-houses-qijia-taoyuan-v5"], // v5：滿租房源也列出
   { revalidate: 600 } // 10 分鐘
 );
 

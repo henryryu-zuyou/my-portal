@@ -5,27 +5,15 @@ type House = { name: string; type: string; area: string; addr: string; vacant: n
 
 // 前端清單快取 key（B：開頁先畫上次的清單，使用者不用等）
 // v3：House 多了 vacant（空房間數），升版避免舊快取顯示「剩 undefined 間空房」
-const CACHE_KEY = "links_houses_v3";
+// v4：滿租房源也列出，升版避免舊快取只有空房清單
+const CACHE_KEY = "links_houses_v4";
 
 // 房源名稱去掉結尾的「實驗室」
 const stripName = (name: string) => name.replace(/實驗室\s*$/, "").trim() || name;
 
-// 地址只截取到「路段」為止：保留「X段」，去掉門牌號/巷/弄/衖/樓
-const roadSection = (addr: string) => {
-  if (!addr) return addr;
-  // 切在第一個「阿拉伯數字(後面不是段)」或 巷/弄/衖/號/樓 之前
-  const m = addr.match(/[0-9０-９]+(?!段)|[巷弄衖號樓]/);
-  const cut = m ? addr.slice(0, m.index) : addr;
-  return cut.replace(/[\s,，]+$/, "").trim();
-};
-
-// 連結要帶入、並記錄到 Sheet/Chat/日曆的「詢問物件」格式：
-// 去掉實驗室 +（路段）。例：大業二275（桃園市桃園區大業路二段）
-const houseLabel = (h: House) => {
-  const loc = roadSection(h.addr) || h.area;
-  const base = stripName(h.name);
-  return loc ? `${base}（${loc}）` : base;
-};
+// 連結要帶入、並記錄到 Sheet/Chat/日曆的「詢問物件」：只帶房源名稱（去掉實驗室）。
+// 例：丞石淳。不帶地址，讓貼到 LINE 的連結保持短、且不含全形括號（避免被截斷）
+const houseLabel = (h: House) => stripName(h.name);
 
 export default function LinksPage() {
   const [houses, setHouses] = useState<House[]>([]);
@@ -67,11 +55,16 @@ export default function LinksPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // 中文直接保留（貼上時好讀），只編碼會破壞網址的符號
   const makeLink = (label: string) =>
-    `${origin}/inquiry?house=${encodeURIComponent(label)}`;
+    `${origin}/inquiry?house=${label.replace(/[%&#?=+\s]/g, encodeURIComponent)}`;
+
+  // 複製時連同給房客的開場白一起複製
+  const makeMessage = (h: House) =>
+    `您好！這裡是租寓 🏠\n為了更快為您安排看房，\n請點以下連結填寫租屋需求：\n\n${makeLink(houseLabel(h))}\n\n【物件】${h.name}`;
 
   const copy = async (h: House) => {
-    await navigator.clipboard.writeText(makeLink(houseLabel(h)));
+    await navigator.clipboard.writeText(makeMessage(h));
     setCopied(h.name);
     setTimeout(() => setCopied(""), 1500);
   };
@@ -93,7 +86,7 @@ export default function LinksPage() {
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-md mx-auto">
         <h1 className="text-xl font-bold text-gray-800 mb-1">🔗 詢問連結產生器</h1>
         <p className="text-sm text-gray-500 mb-4">
-          選擇房源，產生帶標記的專屬詢問連結（資料來自 Ragic、目前有空房的房源）
+          選擇房源，複製給房客的訊息與專屬詢問連結（資料來自官網已上架房源，含滿租）
         </p>
 
         {/* 搜尋框 */}
@@ -112,7 +105,7 @@ export default function LinksPage() {
         {!loading && !error && (
           <>
             <p className="text-xs text-gray-400 mb-2">
-              目前有空房 {houses.length} 筆{query ? `，符合 ${filtered.length} 筆` : ""}
+              共 {houses.length} 筆（有空房 {houses.filter(h => h.vacant > 0).length} 筆）{query ? `，符合 ${filtered.length} 筆` : ""}
             </p>
             <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
               {filtered.map(h => (
@@ -123,9 +116,15 @@ export default function LinksPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium text-gray-800 truncate">🏠 {h.name}</p>
-                      <span className="shrink-0 text-[11px] leading-none bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">
-                        剩 {h.vacant} 間空房
-                      </span>
+                      {h.vacant > 0 ? (
+                        <span className="shrink-0 text-[11px] leading-none bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">
+                          剩 {h.vacant} 間空房
+                        </span>
+                      ) : (
+                        <span className="shrink-0 text-[11px] leading-none bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">
+                          目前滿租
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-gray-400 truncate">
                       連結帶入：{houseLabel(h)}
@@ -135,7 +134,7 @@ export default function LinksPage() {
                     onClick={() => copy(h)}
                     className="shrink-0 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-100 transition"
                   >
-                    {copied === h.name ? "已複製 ✓" : "複製連結"}
+                    {copied === h.name ? "已複製 ✓" : "複製訊息"}
                   </button>
                 </li>
               ))}
