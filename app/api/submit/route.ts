@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { APPS_SCRIPT_URL } from "@/lib/apps-script";
+import { lookupHouseLocation } from "@/lib/houses";
 
 // 在 .env.local 設定 GOOGLE_CHAT_WEBHOOK_URL，留空則不發 Chat 通知
 const CHAT_WEBHOOK_URL = process.env.GOOGLE_CHAT_WEBHOOK_URL;
@@ -49,12 +50,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
+    // 連結只帶房源名稱；日曆要顯示「名稱（縣市區路段）」，送 Apps Script 前補查 houseLoc
+    const houseLoc = await lookupHouseLocation(typeof body.house === "string" ? body.house : "");
+
     // 寫入 Google Sheets 與發送 Chat 通知並行，互不阻擋
     const [res] = await Promise.all([
       fetch(APPS_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, houseLoc }),
       }),
       notifyGoogleChat(body),
     ]);
