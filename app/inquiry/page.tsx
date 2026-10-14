@@ -168,7 +168,7 @@ export default function InquiryPage() {
           <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
             {form.house && <p>🏠 詢問物件：{form.house}</p>}
             <p>📞 電話號碼：{form.phone}</p>
-            {form.lineId && <p>💬 LINE ID：{form.lineId}</p>}
+            {form.lineId && <p>💬 LINE 名稱：{form.lineId}</p>}
             <p>📅 預計入住：{form.moveInDate}</p>
             <p>⏳ 租期：{form.leaseDuration}</p>
             <p>👥 大人人數：{form.adults} 人</p>
@@ -239,15 +239,16 @@ export default function InquiryPage() {
             />
           </div>
 
-          {/* LINE ID（選填） */}
+          {/* LINE 顯示名稱（選填，用來對應 LINE 聊天室） */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">LINE 顯示名稱</label>
             <input
               name="lineId" value={form.lineId} onChange={handleChange}
-              placeholder="選填，方便我們用 LINE 聯繫您"
+              placeholder="例：王小美、Amy 🌸"
               autoCapitalize="none" autoCorrect="off" spellCheck={false}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-400 mt-1">已加 LINE 請填名稱；從 591 等管道詢問者可留空</p>
           </div>
 
           {/* 入住日期 */}
@@ -477,7 +478,7 @@ export default function InquiryPage() {
               {form.house && <p>🏠 詢問物件：{form.house}</p>}
               <p>🙋 稱呼：{form.name}</p>
               <p>📞 電話號碼：{form.phone}</p>
-              {form.lineId && <p>💬 LINE ID：{form.lineId}</p>}
+              {form.lineId && <p>💬 LINE 名稱：{form.lineId}</p>}
               <p>📅 預計入住：{form.moveInDate}</p>
               <p>⏳ 租期：{form.leaseDuration}</p>
               <p>👥 大人人數：{form.adults} 人</p>

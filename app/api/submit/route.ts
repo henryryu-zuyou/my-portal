@@ -14,7 +14,7 @@ function buildChatMessage(d: Record<string, unknown>) {
     d.house ? `🏠 詢問物件：*${s(d.house)}*` : null,
     `🙋 稱呼：${s(d.name)}`,
     `📞 電話號碼：${s(d.phone)}`,
-    d.lineId ? `💬 LINE ID：${s(d.lineId)}` : null,
+    d.lineId ? `💬 LINE 名稱：${s(d.lineId)}` : null,
     `📅 預計入住：${s(d.moveInDate)}`,
     `⏳ 租期：${s(d.leaseDuration)}`,
     `👥 人數：大人 ${s(d.adults)} / 小孩 ${s(d.children)}`,
