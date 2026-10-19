@@ -59,9 +59,9 @@ export default function LinksPage() {
   const makeLink = (label: string) =>
     `${origin}/inquiry?house=${label.replace(/[%&#?=+\s]/g, encodeURIComponent)}`;
 
-  // 複製時連同給房客的開場白一起複製
+  // 複製時連同給房客的開場白（中英對照）一起複製
   const makeMessage = (h: House) =>
-    `您好！這裡是租寓 🏠\n為了更快為您安排看房，\n請點以下連結填寫租屋需求：\n\n${makeLink(houseLabel(h))}\n\n【物件】${h.name}`;
+    `您好！這裡是租寓 🏠\n請點連結填寫看房需求：\nHi! This is Zuyou.\nPlease fill in this form to book a viewing:\n\n${makeLink(houseLabel(h))}\n\n【物件 Property】${h.name}`;
 
   const copy = async (h: House) => {
     await navigator.clipboard.writeText(makeMessage(h));
