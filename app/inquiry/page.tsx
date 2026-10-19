@@ -49,6 +49,56 @@ const En = ({ children }: { children: React.ReactNode }) => (
   <span className="block text-xs font-normal text-gray-400">{children}</span>
 );
 
+// 選項值（送出仍是中文）對應的英文，用在明細顯示
+const VALUE_EN: Record<string, string> = {
+  一年: "1 year", 二年: "2 years", 三年: "3 years",
+  有: "Yes", 無: "No", 是: "Yes", 否: "No",
+  需要: "Needed", 不需要: "Not needed",
+  需要租補: "Rent subsidy", 需要入籍: "Household registration", 需要報稅: "Tax filing",
+  "591": "591 website", 租寓官網: "Zuyou website", 其他: "Other",
+};
+const toEn = (v: string) => VALUE_EN[v] ?? v;
+
+const Row = ({ zh, en, value, valueEn }: { zh: string; en: string; value: React.ReactNode; valueEn?: React.ReactNode }) => (
+  <p>{zh}：{value}<En>{en}: {valueEn ?? value}</En></p>
+);
+
+// 填寫內容明細（送出前確認視窗、完成頁共用）
+function FormSummary({ form, showName }: { form: typeof initialForm; showName?: boolean }) {
+  return (
+    <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
+      {form.house && <Row zh="🏠 詢問物件" en="Property" value={form.house} />}
+      {showName && <Row zh="🙋 稱呼" en="Name" value={form.name} />}
+      <Row zh="📞 電話號碼" en="Phone" value={form.phone} />
+      {form.lineId && <Row zh="💬 LINE 名稱" en="LINE name" value={form.lineId} />}
+      <Row zh="📅 預計入住" en="Move-in date" value={form.moveInDate} />
+      <Row zh="⏳ 租期" en="Lease length" value={form.leaseDuration} valueEn={toEn(form.leaseDuration)} />
+      <Row zh="👥 大人人數" en="Adults" value={`${form.adults} 人`} valueEn={form.adults} />
+      <Row zh="👶 小孩人數" en="Children" value={`${form.children || 0} 人`} valueEn={form.children || 0} />
+      <Row
+        zh="🐾 寵物" en="Pets"
+        value={`${form.hasPet}${form.petType ? `（${form.petType}）` : ""}`}
+        valueEn={`${toEn(form.hasPet)}${form.petType ? ` (${form.petType})` : ""}`}
+      />
+      <Row zh="💼 職業" en="Occupation" value={form.occupation} />
+      <Row zh="🚬 抽菸" en="Smoker" value={form.isSmoker} valueEn={toEn(form.isSmoker)} />
+      <Row
+        zh="📄 需租補/入籍/報稅" en="Subsidy / registration / tax"
+        value={form.needSubsidy.join("、") || "未填寫"}
+        valueEn={form.needSubsidy.map(toEn).join(", ") || "Not filled"}
+      />
+      <Row zh="💰 租金預算" en="Rent budget" value={`NT$ ${form.budget}`} />
+      <Row zh="🚗 汽車位" en="Parking space" value={form.needParking} valueEn={toEn(form.needParking)} />
+      {([1, 2, 3] as const).map(n => {
+        const v = form[`viewingSlot${n}`];
+        return <Row key={n} zh={`🗓 看房時間 ${n}`} en={`Viewing time ${n}`} value={formatDateTime(v)} valueEn={v ? formatDateTime(v) : "Not filled"} />;
+      })}
+      {form.note && <Row zh="📝 其他說明" en="Notes" value={form.note} />}
+      <Row zh="📣 如何得知此房源" en="Heard about us via" value={form.source} valueEn={toEn(form.source)} />
+    </div>
+  );
+}
+
 // 手機 webview（如 LINE 內建瀏覽器）常沒有網址列，補一個返回／分享連結的工具列
 // memo：工具列不吃 props，用 memo 避免每次表單輸入都連帶 re-render
 const PageToolbar = memo(function PageToolbar() {
@@ -172,26 +222,7 @@ export default function InquiryPage() {
           <p className="text-sm text-gray-500 mb-2">Submitted successfully!</p>
           <p className="text-gray-500 text-sm">感謝 {form.name} 填寫資料，我們會盡快與您聯繫。</p>
           <p className="text-xs text-gray-400 mb-6">Thank you, {form.name}. We will contact you shortly.</p>
-          <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
-            {form.house && <p>🏠 詢問物件：{form.house}</p>}
-            <p>📞 電話號碼：{form.phone}</p>
-            {form.lineId && <p>💬 LINE 名稱：{form.lineId}</p>}
-            <p>📅 預計入住：{form.moveInDate}</p>
-            <p>⏳ 租期：{form.leaseDuration}</p>
-            <p>👥 大人人數：{form.adults} 人</p>
-            <p>👶 小孩人數：{form.children || 0} 人</p>
-            <p>🐾 寵物：{form.hasPet}{form.petType ? `（${form.petType}）` : ""}</p>
-            <p>💼 職業：{form.occupation}</p>
-            <p>🚬 抽菸：{form.isSmoker}</p>
-            <p>📄 需租補/入籍/報稅：{form.needSubsidy.join("、") || "未填寫"}</p>
-            <p>💰 租金預算：NT$ {form.budget}</p>
-            <p>🚗 汽車位：{form.needParking}</p>
-            <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
-            <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
-            <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
-            {form.note && <p>📝 其他說明：{form.note}</p>}
-            <p>📣 如何得知此房源：{form.source}</p>
-          </div>
+          <FormSummary form={form} />
           <button
             onClick={() => {
               setForm({ ...initialForm, house: form.house });
@@ -233,7 +264,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">請問怎麼稱呼？ *<En>How should we address you?</En></label>
             <input
               name="name" required value={form.name} onChange={handleChange}
-              placeholder="例：王先生 / 陳小姐"
+              placeholder="例：王先生 / 陳小姐 (e.g. Mr. Wang)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -243,7 +274,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">電話號碼 *<En>Phone number</En></label>
             <input
               type="tel" name="phone" required value={form.phone} onChange={handleChange}
-              placeholder="例：0912345678"
+              placeholder="例 e.g. 0912345678"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -253,7 +284,7 @@ export default function InquiryPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">LINE 顯示名稱<En>LINE display name</En></label>
             <input
               name="lineId" value={form.lineId} onChange={handleChange}
-              placeholder="例：王小美、Amy 🌸"
+              placeholder="例 e.g. 王小美、Amy 🌸"
               autoCapitalize="none" autoCorrect="off" spellCheck={false}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -327,6 +358,7 @@ export default function InquiryPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             )}
+            {form.hasPet === "有" && <p className="text-xs text-gray-400 mt-1">Please enter the type of pet (e.g. cat, dog)</p>}
           </div>
 
           {/* 職業 */}
@@ -337,6 +369,7 @@ export default function InquiryPage() {
               placeholder="例：長庚護理師 / 科技業工程師 / 製造業生管"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-400 mt-1">e.g. Nurse at Chang Gung Hospital / Tech engineer / Production planner</p>
           </div>
 
           {/* 抽菸 */}
@@ -387,7 +420,7 @@ export default function InquiryPage() {
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">NT$</span>
               <input
                 type="number" name="budget" required value={form.budget} onChange={handleChange}
-                placeholder="例：18000"
+                placeholder="例 e.g. 18000"
                 min="0"
                 className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -453,6 +486,7 @@ export default function InquiryPage() {
               placeholder="有其他需求或想補充的資訊，歡迎填寫"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             />
+            <p className="text-xs text-gray-400 mt-1">Feel free to add any other needs or information.</p>
           </div>
 
           {/* 如何得知此房源 */}
@@ -485,27 +519,7 @@ export default function InquiryPage() {
             <p className="text-sm text-gray-500 mb-1">Please confirm your information</p>
             <p className="text-xs text-gray-500">確認無誤後按「確定送出」，需修改請按「返回修改」</p>
             <p className="text-xs text-gray-400 mb-4">Tap "Confirm" if everything is correct, or "Edit" to make changes.</p>
-            <div className="text-left bg-gray-50 rounded-lg p-4 text-sm space-y-2 text-gray-700">
-              {form.house && <p>🏠 詢問物件：{form.house}</p>}
-              <p>🙋 稱呼：{form.name}</p>
-              <p>📞 電話號碼：{form.phone}</p>
-              {form.lineId && <p>💬 LINE 名稱：{form.lineId}</p>}
-              <p>📅 預計入住：{form.moveInDate}</p>
-              <p>⏳ 租期：{form.leaseDuration}</p>
-              <p>👥 大人人數：{form.adults} 人</p>
-              <p>👶 小孩人數：{form.children || 0} 人</p>
-              <p>🐾 寵物：{form.hasPet}{form.petType ? `（${form.petType}）` : ""}</p>
-              <p>💼 職業：{form.occupation}</p>
-              <p>🚬 抽菸：{form.isSmoker}</p>
-              <p>📄 需租補/入籍/報稅：{form.needSubsidy.join("、") || "未填寫"}</p>
-              <p>💰 租金預算：NT$ {form.budget}</p>
-              <p>🚗 汽車位：{form.needParking}</p>
-              <p>🗓 看房時間 1：{formatDateTime(form.viewingSlot1)}</p>
-              <p>🗓 看房時間 2：{formatDateTime(form.viewingSlot2)}</p>
-              <p>🗓 看房時間 3：{formatDateTime(form.viewingSlot3)}</p>
-              {form.note && <p>📝 其他說明：{form.note}</p>}
-              <p>📣 如何得知此房源：{form.source}</p>
-            </div>
+            <FormSummary form={form} showName />
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setShowConfirm(false)}
