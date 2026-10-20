@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Statement } from "@/lib/statement";
+import type { Statement, StatementHit } from "@/lib/statement";
 
 // /statement：代管表說明。貼上寄給屋主的代管表連結，用白話逐區說明這一期的錢怎麼算。
 // 連結放在網址 # 後面（不會送到伺服器 log），可以把整個網址直接傳給屋主或同事。
@@ -35,16 +35,32 @@ function highlights(st: Statement): string[] {
     out.push(`本期扣除「${what}」${money(num(r["費用"]))}${r["其他說明"] ? `：${r["其他說明"]}` : ""}。`);
   }
 
+  // 房客其他應繳／代墊：逐筆講，正數＝房客多繳轉給屋主，負數＝從租金扣掉（如屋主負擔的小修繕）
+  const others = st.payments.filter(
+    (p) => p.inPeriod && !["租金", "押金"].includes(p["款項類型"]) && num(p["金額"]),
+  );
+  for (const p of others) {
+    const amt = num(p["金額"]);
+    const what = p["說明"] && p["說明"] !== p["款項類型"] ? `${p["款項類型"]}（${p["說明"]}）` : p["款項類型"];
+    out.push(
+      amt > 0
+        ? `房客另外繳了${what} ${money(amt)}，一併轉給屋主。`
+        : `本期從租金扣除${what} ${money(Math.abs(amt))}${p["費用歸屬"] ? `，由${p["費用歸屬"]}負擔` : ""}。`,
+    );
+  }
   const other = st.lines.find((l) => l.label === "房客其他應繳／代墊");
-  if (other) {
-    const kinds = [
-      ...new Set(
-        st.payments
-          .filter((p) => p.inPeriod && !["租金", "押金"].includes(p["款項類型"]))
-          .map((p) => p["款項類型"]),
-      ),
-    ];
-    out.push(`房客另外繳了${kinds.length ? kinds.join("、") : "其他費用"} ${money(other.amount)}，一併轉給屋主。`);
+  if (other && !others.length) {
+    out.push(`房客其他應繳／代墊 ${money(other.amount)}，明細請見「房客繳租紀錄」。`);
+  }
+
+  // 其他加減：照登記的說明講；遞延＝上一期扣不完，延到本期扣
+  const adj = st.lines.find((l) => l.label === "其他加減");
+  if (adj) {
+    const why = adj.note ? `：${adj.note}` : "";
+    const defer = /遞延/.test(adj.note || "")
+      ? "（上一期的費用比租金多、扣不完的部分，延到這一期再扣）"
+      : "";
+    out.push(`其他加減 ${money(adj.amount)}${why}${defer}。`);
   }
 
   if (st.depositThisMonth) {
@@ -53,6 +69,11 @@ function highlights(st: Statement): string[] {
         ? `本期收到押金 ${money(st.depositThisMonth)}，依約由租寓全額保管，不會匯給屋主，也不影響本期金額。`
         : `本期收到押金 ${money(st.depositThisMonth)}，屋主持有的部分會在下一期反映到「押金紀錄」。`,
     );
+  }
+
+  const lastDeposit = st.deposits[st.deposits.length - 1];
+  if (!st.depositThisMonth && st.depositRule && st.depositRule !== "公司全持" && lastDeposit) {
+    out.push(`押金規則是「${st.depositRule}」，屋主目前持有押金 ${money(num(lastDeposit["屋主持有押金總額"]))}。`);
   }
 
   const fee = st.lines.find((l) => l.label === "代管費");
@@ -122,12 +143,52 @@ export default function StatementPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [hits, setHits] = useState<StatementHit[]>([]);
+  const [needLogin, setNeedLogin] = useState(false);
+
+  // 輸入框可貼連結，也可打房源名稱（名稱查詢需登入，由 /api/statement/search 把關）
+  const submit = async (q: string) => {
+    q = q.trim();
+    if (!q) return;
+    if (/^https?:\/\//.test(q)) return load(q);
+    setLoading(true);
+    setErr("");
+    setSt(null);
+    setHits([]);
+    setNeedLogin(false);
+    try {
+      const res = await fetch("/api/statement/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q }),
+      });
+      if (res.status === 401) {
+        setNeedLogin(true);
+        throw new Error("用房源名稱查詢需要先登入同仁帳號（貼代管表連結則不用）。");
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "查詢失敗");
+      const list: StatementHit[] = data.hits || [];
+      if (!list.length) throw new Error(`找不到「${q}」的代管表，請確認房源名稱。`);
+      if (list.length === 1) {
+        setLink(list[0].link);
+        setLoading(false);
+        return load(list[0].link);
+      }
+      setHits(list);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const load = async (l: string) => {
     if (!l.trim()) return;
     setLoading(true);
     setErr("");
     setSt(null);
+    setHits([]);
     try {
       const res = await fetch("/api/statement", {
         method: "POST",
@@ -170,19 +231,19 @@ export default function StatementPage() {
       <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-2xl mx-auto">
         <Link href="/" className="text-xs text-gray-400 hover:text-gray-600">‹ 回工作助手</Link>
         <h1 className="text-xl font-bold text-gray-800 mt-2 mb-1">🧾 代管表說明</h1>
-        <p className="text-sm text-gray-500 mb-5">貼上寄給屋主的代管表連結，逐項說明這一期的錢是怎麼算出來的。</p>
+        <p className="text-sm text-gray-500 mb-5">輸入房源名稱（同仁登入後可用），或貼上寄給屋主的代管表連結，逐項說明這一期的錢是怎麼算出來的。</p>
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            load(link);
+            submit(link);
           }}
           className="flex flex-col sm:flex-row gap-2"
         >
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder="https://ap14.ragic.com/zuyou2022/forms16/…"
+            placeholder="房源名稱（例：宜誠君悅）或代管表連結"
             className="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
           />
           <button
@@ -192,7 +253,40 @@ export default function StatementPage() {
             {loading ? "讀取中…" : "說明"}
           </button>
         </form>
-        {err && <p className="text-sm text-red-600 mt-3">{err}</p>}
+        {err && (
+          <p className="text-sm text-red-600 mt-3">
+            {err}
+            {needLogin && (
+              <a href="/login?next=/statement" className="ml-2 text-blue-600 underline">
+                前往登入
+              </a>
+            )}
+          </p>
+        )}
+
+        {hits.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 mb-2">找到 {hits.length} 筆，請選一間：</p>
+            <div className="flex flex-col gap-2">
+              {hits.map((h) => (
+                <button
+                  key={h.id}
+                  onClick={() => {
+                    setLink(h.link);
+                    load(h.link);
+                  }}
+                  className="text-left border border-gray-200 rounded-xl px-4 py-3 hover:border-blue-500 transition"
+                >
+                  <span className="block text-sm font-semibold text-gray-800">{h.name}</span>
+                  <span className="block text-xs text-gray-500">
+                    {h.address}
+                    {h.company ? `｜${h.company}` : ""}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {st && (
           <>

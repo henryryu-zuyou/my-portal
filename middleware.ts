@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/auth";
 
-// 需要登入的路由：首頁、連結產生器、官網上架、房源 API、代管說明書、SCRM 補 UID（含其名單 API，含房客個資）
+// 需要登入的路由：首頁、連結產生器、官網上架、房源 API、代管說明書、代管表名稱查詢、SCRM 補 UID（含其名單 API，含房客個資）
 // （/inquiry、/api/submit、/rent-tax、/daiguan 維持公開：房客/房東可直接使用）
 export const config = {
   matcher: [
@@ -13,6 +13,7 @@ export const config = {
     "/api/houses/:path*",
     "/api/listing-fill/:path*",
     "/api/missing-uid/:path*",
+    "/api/statement/search",
   ],
 };
 

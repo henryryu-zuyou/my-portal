@@ -45,6 +45,42 @@ export async function fetchStatementRecord(t: LinkTarget): Promise<Record<string
   throw lastErr;
 }
 
+// ── 用房源名稱找代管表（限登入同仁）──────────────────
+// 用同事的 RAGIC_READONLY_KEY：**只能 GET，禁止任何寫入**。
+// 「代管表-桃園」forms16/2148 是 代管表 forms16/1 的子檢視，同一批資料，所以搜 forms16/1 涵蓋各區。
+
+export type StatementHit = { id: string; name: string; address: string; company: string; link: string };
+
+export async function searchStatements(q: string): Promise<StatementHit[]> {
+  const key = process.env.RAGIC_READONLY_KEY;
+  if (!key) throw new Error("NO_KEY");
+  const kw = q.trim().replace(/實驗室$/, "");
+  const url =
+    `https://${RAGIC_HOST}/${ACCOUNT}/forms16/1?api&subtable=0&limit=20` +
+    `&fts=${encodeURIComponent(kw)}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { Authorization: `Basic ${key}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+  });
+  const data = await res.json();
+  if (data?.status === "ERROR") throw new Error(String(data.msg || "Ragic 回傳錯誤"));
+  const hits = Object.values(data as Record<string, Record<string, unknown>>)
+    .filter((r) => r && r._ragicId != null)
+    .map((r) => ({
+      id: s(r._ragicId),
+      name: s(r["房源名稱"]),
+      address: s(r["完整地址"]),
+      company: s(r["管理公司"]),
+      link: s(r["代管表連結"]),
+    }))
+    .filter((h) => parseStatementLink(h.link));
+  // fts 是全文搜尋，地址或備註裡有關鍵字也會中；名稱有中的排前面
+  const byName = hits.filter((h) => h.name.includes(kw));
+  return byName.length ? byName : hits;
+}
+
 // ── 整理 ─────────────────────────────────────────
 
 type Row = Record<string, string>;
@@ -109,7 +145,12 @@ export function buildStatement(rec: Record<string, unknown>): Statement {
   if (g("能源費給屋主?") !== "X") add("能源／網路費", n(rec["能源/網路費"]), g("→計算說明"));
   add("屋主押金收入", n(rec["屋主押金收入"]), g("→押金計算說明"));
   add("修繕費用／租寓代墊", n(rec["修繕費用/租寓代墊"]), "見下方「修繕／費用紀錄」");
-  add("房客其他應繳／代墊", n(rec["房客其他應繳/代墊"]), "房客另外繳、要轉給屋主的費用（如社區管理費）");
+  const otherAmt = n(rec["房客其他應繳/代墊"]);
+  add(
+    "房客其他應繳／代墊",
+    otherAmt,
+    otherAmt > 0 ? "房客另外繳、要轉給屋主的費用（如社區管理費）" : "從租金中扣除的代墊費用，見下方「房客繳租紀錄」",
+  );
   add("違約金", n(rec["違約金"]));
   add("其他加減", n(rec["其他加減"]), g("→加減說明"));
   add("代管費", n(rec["代管費"]), undefined, true);
