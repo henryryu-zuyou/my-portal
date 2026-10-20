@@ -41,6 +41,12 @@ export default function Home() {
       desc: "比較四種身分的年度應繳稅額",
     },
     {
+      href: "/statement",
+      icon: "🧾",
+      title: "代管表說明",
+      desc: "貼上代管表連結，白話說明這期屋主應收怎麼算；公開連結",
+    },
+    {
       href: "/watermark",
       icon: "🔒",
       title: "機密文件浮水印",
