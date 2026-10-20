@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "預約看屋",
-  description: "房客詢問與預約看屋表單",
+  title: "工作助手",
+  description: "租寓內部工作助手",
 };
 
 export default function RootLayout({
